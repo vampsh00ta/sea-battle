@@ -1,0 +1,25 @@
+seabattle:
+  name: 'seabattle'
+  version: '1.0.0'
+
+http:
+  port: '8080'
+
+logger:
+  log_level: 'debug'
+  rollbar_env: 'seabattle'
+redis:
+  address: "localhost:6379"
+  password: ""
+  db: 0
+postgres:
+  username: ""
+  password: ""
+  host: "localhost"
+  port: "5432"
+  name: ""
+  pool_max: 10
+
+#rabbitmq:
+#  rpc_server_exchange: 'rpc_server'
+#  rpc_client_exchange: 'rpc_client'

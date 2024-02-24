@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  seabattle:
+    build:
+      context: api_template
+    image: goseabattle
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db
+  db:
+    image: postgres:14.6
+    restart: always
+    container_name: db
+    hostname: db
+    environment:
+      POSTGRES_DB: "POSTGRES_DB"
+      POSTGRES_USER: "POSTGRES_USER"
+      POSTGRES_PASSWORD: "POSTGRES_PASSWORD"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U POSTGRES_USER" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db
+
+networks:
+  db:
+    driver: bridge
+volumes:
+  postgres_data:
