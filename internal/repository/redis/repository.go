@@ -15,7 +15,7 @@ type Repository interface {
 	GetUserByChatId(ctx context.Context, idChatKey string) (models.User, error)
 
 	GetSessionByChatId(ctx context.Context, idChatKey string) (string, error)
-	CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) error
+	CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) (string, error)
 }
 
 type Redis struct {
@@ -29,20 +29,21 @@ func (r Redis) GetUserByChatId(ctx context.Context, idChatKey string) (models.Us
 	}
 	return user, nil
 }
-func (r Redis) CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) error {
-	sessionId := uuid.New().String()
+func (r Redis) CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) (string, error) {
+	sessionId := models.BattleSession + "_" + uuid.New().String()
 	var err error
-	err = r.client.HSet(ctx, idChatKey1, models.User{SessionId: sessionId}).Err()
+	err = r.client.HSet(ctx, sessionId,
+		models.Session{
+			TgId1: idChatKey1,
+			TgId2: idChatKey2,
+			Ready: 0,
+			Stage: models.StagePicking,
+		}).Err()
 	if err != nil {
-		return err
-	}
-	err = r.client.HSet(ctx, idChatKey2, models.User{SessionId: sessionId}).Err()
-
-	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return sessionId, nil
 }
 
 func (r Redis) GetSessionByChatId(ctx context.Context, idChatKey string) (string, error) {

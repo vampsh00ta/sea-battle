@@ -17,8 +17,20 @@ const (
 	EnemyField    = "enemy_field"
 )
 
+const (
+	StagePicking = "pick"
+	StageFight   = "fight"
+)
+
+type Session struct {
+	TgId1 string `json:"tgId1" redis:"tgId1"`
+	TgId2 string `json:"tgId2" redis:"tgId2"`
+	Ready int    `json:"ready" redis:"ready"`
+	Stage string `json:"stage" redis:"stage"`
+	Step  string `json:"step" redis:"step"`
+}
+
 type User struct {
-	SessionId        string `json:"tg_battle_session" redis:"tg_battle_session"`
 	MyBattleField    string `json:"my_field" redis:"my_field"`
 	EnemyBattleField string `json:"enemy_field" redis:"enemy_field"`
 }
