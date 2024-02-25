@@ -26,16 +26,35 @@ func main() {
 	rep := redisrep.New(clientRedis)
 	err = rep.CreateSessionByChatId(ctx, "key1", "key2")
 	fmt.Println(err)
-	data, err := rep.GetSessionByChatId(ctx, "key2")
-	fmt.Println(data, err)
 
 	fields := entity.NewBattleField()
 
 	err = rep.SetBattleField(ctx, "key1", fields.BattleField, false)
 	fmt.Println(err)
 
-	res, err := rep.GetBattleField(ctx, "key1", false)
-	fmt.Println(res, err)
+	err = rep.SetBattleField(ctx, "key1", fields.BattleField, true)
+	fmt.Println(err)
+
+	//res, err := rep.GetBattleField(ctx, "key1", false)
+	//fmt.Println(res, err)
+
+	user, err := rep.GetUserByChatId(ctx, "key1")
+	fmt.Println(user, err)
+
+	fields = entity.NewBattleField()
+
+	err = rep.SetBattleField(ctx, "key2", fields.BattleField, false)
+	fmt.Println(err)
+
+	err = rep.SetBattleField(ctx, "key2", fields.BattleField, true)
+	fmt.Println(err)
+
+	//res, err := rep.GetBattleField(ctx, "key1", false)
+	//fmt.Println(res, err)
+
+	user, err = rep.GetUserByChatId(ctx, "key2")
+	fmt.Println(user, err)
+
 	//ent.Fields[4][4].Ship = true
 	//ent.Fields[4][5].Ship = true
 	//

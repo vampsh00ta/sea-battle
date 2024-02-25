@@ -12,6 +12,8 @@ type Repository interface {
 	GetBattleField(ctx context.Context, idChatKey string, myField bool) (*models.BattleField, error)
 	SetBattleField(ctx context.Context, idChatKey string, fields *models.BattleField, myField bool) error
 
+	GetUserByChatId(ctx context.Context, idChatKey string) (models.User, error)
+
 	GetSessionByChatId(ctx context.Context, idChatKey string) (string, error)
 	CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) error
 }
@@ -20,6 +22,13 @@ type Redis struct {
 	client *redis.Client
 }
 
+func (r Redis) GetUserByChatId(ctx context.Context, idChatKey string) (models.User, error) {
+	var user models.User
+	if err := r.client.HGetAll(ctx, idChatKey).Scan(&user); err != nil {
+		return models.User{}, nil
+	}
+	return user, nil
+}
 func (r Redis) CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) error {
 	sessionId := uuid.New().String()
 	var err error
@@ -66,7 +75,6 @@ func (r Redis) GetBattleField(ctx context.Context, idChatKey string, myField boo
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Println(data)
 	return &data, err
 }
 func (r Redis) SetBattleField(ctx context.Context, idChatKey string, fields *models.BattleField, myField bool) error {
