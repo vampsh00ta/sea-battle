@@ -7,6 +7,7 @@ import (
 	"log"
 	"seabattle/config"
 	redisrep "seabattle/internal/repository/redis"
+	"seabattle/internal/service/entity"
 )
 
 func main() {
@@ -21,15 +22,20 @@ func main() {
 		Password: cfg.Redis.Password,
 		DB:       cfg.Redis.Db,
 	})
+
 	rep := redisrep.New(clientRedis)
 	err = rep.CreateSessionByChatId(ctx, "key1", "key2")
 	fmt.Println(err)
 	data, err := rep.GetSessionByChatId(ctx, "key2")
 	fmt.Println(data, err)
 
-	err = rep.SetBattleField(ctx, "key1", "asdasd", false)
+	fields := entity.NewBattleField()
+
+	err = rep.SetBattleField(ctx, "key1", fields.BattleField, false)
 	fmt.Println(err)
-	//ent := entity.NewBattleField()
+
+	res, err := rep.GetBattleField(ctx, "key1", false)
+	fmt.Println(res, err)
 	//ent.Fields[4][4].Ship = true
 	//ent.Fields[4][5].Ship = true
 	//

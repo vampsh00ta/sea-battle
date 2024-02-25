@@ -1,7 +1,14 @@
 package models
 
 type BattleField struct {
-	Fields [][]Field
+	Fields [][]Field `json:"fields"`
+}
+
+type Field struct {
+	Count  int  `json:"count"`
+	Ship   bool `json:"ship"`
+	Marked bool `json:"marked"`
+	Dead   bool `json:"dead"`
 }
 
 const (
@@ -9,13 +16,6 @@ const (
 	MyField       = "my_field"
 	EnemyField    = "enemy_field"
 )
-
-type Field struct {
-	Count  int
-	Ship   bool
-	Marked bool
-	Dead   bool
-}
 
 type User struct {
 	SessionId        string `json:"tg_battle_session" redis:"tg_battle_session"`

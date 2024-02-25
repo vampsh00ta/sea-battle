@@ -2,14 +2,15 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"seabattle/internal/repository/models"
 )
 
 type Repository interface {
-	GetBattleField(ctx context.Context, idChatKey string) (models.BattleField, error)
-	SetBattleField(ctx context.Context, idChatKey string, fields string, myField bool) error
+	GetBattleField(ctx context.Context, idChatKey string, myField bool) (*models.BattleField, error)
+	SetBattleField(ctx context.Context, idChatKey string, fields *models.BattleField, myField bool) error
 
 	GetSessionByChatId(ctx context.Context, idChatKey string) (string, error)
 	CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) error
@@ -17,11 +18,6 @@ type Repository interface {
 
 type Redis struct {
 	client *redis.Client
-}
-
-func (r Redis) GetBattleField(ctx context.Context, idChatKey string) (models.BattleField, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (r Redis) CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) error {
@@ -47,7 +43,8 @@ func (r Redis) GetSessionByChatId(ctx context.Context, idChatKey string) (string
 	}
 	return res.Val(), nil
 }
-func (r Redis) SetBattleField(ctx context.Context, idChatKey string, fields string, myField bool) error {
+
+func (r Redis) GetBattleField(ctx context.Context, idChatKey string, myField bool) (*models.BattleField, error) {
 	var err error
 	var key string
 	if myField {
@@ -55,7 +52,36 @@ func (r Redis) SetBattleField(ctx context.Context, idChatKey string, fields stri
 	} else {
 		key = models.EnemyField
 	}
-	err = r.client.HSet(ctx, idChatKey, key, fields).Err()
+	if err != nil {
+		return nil, err
+	}
+
+	res := r.client.HGet(ctx, idChatKey, key)
+	if res.Err() != nil {
+		return nil, err
+	}
+	dataStr := res.Val()
+	var data models.BattleField
+	err = json.Unmarshal([]byte(dataStr), &data)
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Println(data)
+	return &data, err
+}
+func (r Redis) SetBattleField(ctx context.Context, idChatKey string, fields *models.BattleField, myField bool) error {
+	var err error
+	var key string
+	if myField {
+		key = models.MyField
+	} else {
+		key = models.EnemyField
+	}
+	data, err := json.Marshal(fields)
+	if err != nil {
+		return err
+	}
+	err = r.client.HSet(ctx, idChatKey, key, string(data)).Err()
 	if err != nil {
 		return err
 	}

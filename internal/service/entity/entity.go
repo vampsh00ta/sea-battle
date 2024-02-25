@@ -19,7 +19,7 @@ const (
 )
 
 type BattleField struct {
-	models.BattleField
+	*models.BattleField
 }
 
 type Point struct {
@@ -32,7 +32,7 @@ func NewBattleField() BattleField {
 		fields[i] = make([]models.Field, weigth)
 	}
 	return BattleField{
-		models.BattleField{
+		&models.BattleField{
 			fields,
 		},
 	}
