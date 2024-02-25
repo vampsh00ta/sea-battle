@@ -1,39 +1,40 @@
 package entity
 
 import (
+	"encoding/json"
 	"errors"
+	"seabattle/internal/repository/models"
 	"seabattle/internal/service"
 )
 
-// * -уничтоженный
-// . - занятый
 const (
 	ship1 = iota
 	ship2
 	ship3
 	ship4
 )
+const (
+	heigth = 8
+	weigth = 8
+)
 
 type BattleField struct {
-	Fields [][]Field
+	models.BattleField
 }
-type Field struct {
-	Count  int
-	Ship   bool
-	Marked bool
-	Dead   bool
-}
+
 type Point struct {
 	X, Y int
 }
 
 func NewBattleField() BattleField {
-	fields := make([][]Field, 8)
+	fields := make([][]models.Field, heigth)
 	for i := range fields {
-		fields[i] = make([]Field, 8)
+		fields[i] = make([]models.Field, weigth)
 	}
 	return BattleField{
-		fields,
+		models.BattleField{
+			fields,
+		},
 	}
 }
 
@@ -43,35 +44,7 @@ func (b *BattleField) Shoot(x, y int) error {
 	}
 	if b.Fields[x][y].Ship {
 		b.Fields[x][y].Marked = true
-		//b.Fields[x][y].Count -= 1
-		//if b.Fields[x][y].Count == 0 {
-		//
-		//	used := make(map[point]bool)
-		//	var fillDeadShip func(x, y int)
-		//	fillDeadShip = func(x, y int) {
-		//		fmt.Println(x, y)
-		//		dirs := [][]int{{-1, 0}, {0, -1}, {1, 0}, {0, 1}}
-		//		for _, dir := range dirs {
-		//			x0, y0 := dir[0], dir[1]
-		//			p := point{x + x0, y + y0}
-		//
-		//			if _, ok := used[p]; !ok && p.x < len(b.Fields[0]) && p.y < len(b.Fields) && p.x >= 0 && p.y >= 0 {
-		//				if b.Fields[p.x][p.y].Ship {
-		//					used[p] = true
-		//					fillDeadShip(p.x, p.y)
-		//				} else {
-		//					fmt.Println(p)
-		//
-		//					b.Fields[p.x][p.y].Marked = true
-		//				}
-		//			}
-		//
-		//		}
-		//
-		//	}
-		//	fillDeadShip(x, y)
-		//
-		//} else {
+
 		used := make(map[Point]bool)
 
 		var descCount func(x, y int)
@@ -99,7 +72,6 @@ func (b *BattleField) Shoot(x, y int) error {
 
 		}
 		descCount(x, y)
-		//}
 		return nil
 	} else {
 		b.Fields[x][y].Marked = true
@@ -124,6 +96,14 @@ func (b *BattleField) AddShip(p1, p2 Point, shipType int) {
 
 		}
 	}
+}
+func (b *BattleField) String() (string, error) {
+	data, err := json.Marshal(b.BattleField)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
 }
 
 //func (b *BattleField) convertToModel() models.BattleField{
