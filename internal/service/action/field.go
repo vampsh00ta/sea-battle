@@ -117,7 +117,7 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 	}
 	var shipType int
 	shipType = int(math.Abs(float64((y2 - y1) + (x2 - x1))))
-	if shipType >= 3 {
+	if shipType >= e.cfg.ShipTypeCount {
 		return 0, errors.New(rules.WrongLengthErr)
 	}
 	if b.Ships[shipType] >= e.cfg.MaxShipCount-shipType {

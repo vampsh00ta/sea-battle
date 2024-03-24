@@ -5,6 +5,7 @@ import (
 	tgmodels "github.com/go-telegram/bot/models"
 	"seabattle/internal/repository/models"
 	"seabattle/internal/service/action"
+	"seabattle/internal/service/rules"
 	"seabattle/internal/transport/tg/request"
 	"sort"
 	"strconv"
@@ -33,6 +34,7 @@ const (
 	SettingReady     = "Дождись своего оппонента"
 	YourTurn         = "Твой ход"
 	WaitOpponentTurn = "Дождись хода оппонента"
+	AvailableShips   = "Доступные корабли"
 )
 
 func Battlefield(fight *models.BattleField, sessionId string) *tgmodels.InlineKeyboardMarkup {
@@ -111,7 +113,7 @@ func BattlefieldAction(user *models.User, turn, token string, end bool) (*tgmode
 		count := user.MyField.Ships[ship]
 		if count > 0 {
 			myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
-				Text: strconv.Itoa(ship+1) + "п - " + strconv.Itoa(count), CallbackData: "pass#",
+				Text: strconv.Itoa(ship+1) + "п:  " + strconv.Itoa(count), CallbackData: "pass#",
 			})
 		}
 
@@ -210,26 +212,72 @@ func SetBattlefieldWaiting(fight *models.BattleField) *tgmodels.InlineKeyboardMa
 
 }
 func SetBattlefield(fight *models.BattleField, sessionId string, text string) *tgmodels.InlineKeyboardMarkup {
+	kb := &tgmodels.InlineKeyboardMarkup{}
 
-	kb := Battlefield(fight, sessionId)
+	setKb := Battlefield(fight, sessionId)
 	kb.InlineKeyboard = append(kb.InlineKeyboard, []tgmodels.InlineKeyboardButton{
 		tgmodels.InlineKeyboardButton{
 			Text: text, CallbackData: "apply",
 		},
 	})
+	kb.InlineKeyboard = append(kb.InlineKeyboard, setKb.InlineKeyboard...)
+
+	kb.InlineKeyboard = append(kb.InlineKeyboard, []tgmodels.InlineKeyboardButton{
+		tgmodels.InlineKeyboardButton{
+			Text: AvailableShips, CallbackData: "apply",
+		},
+	})
+	myTemp := []tgmodels.InlineKeyboardButton{}
+
+	for i := 0; i < 4; i++ {
+		count := rules.Game.MaxShipCount - fight.Ships[i] - i
+		if i < rules.Game.ShipTypeCount {
+			myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
+				Text: strconv.Itoa(i+1) + "п:  " + strconv.Itoa(count), CallbackData: "pass#",
+			})
+		}
+
+	}
+
+	kb.InlineKeyboard = append(kb.InlineKeyboard, myTemp)
+
 	return kb
 
 }
 
 func SetBattlefieldWithError(fight *models.BattleField, sessionId string, text, err string) *tgmodels.InlineKeyboardMarkup {
 
-	kb := Battlefield(fight, sessionId)
+	kb := &tgmodels.InlineKeyboardMarkup{}
+
+	setKb := Battlefield(fight, sessionId)
 	kb.InlineKeyboard = append(kb.InlineKeyboard, []tgmodels.InlineKeyboardButton{
 		tgmodels.InlineKeyboardButton{
 			Text: text, CallbackData: "apply",
 		},
+	})
+	kb.InlineKeyboard = append(kb.InlineKeyboard, setKb.InlineKeyboard...)
+
+	kb.InlineKeyboard = append(kb.InlineKeyboard, []tgmodels.InlineKeyboardButton{
 		tgmodels.InlineKeyboardButton{
-			Text: err, CallbackData: "apply",
+			Text: AvailableShips, CallbackData: "apply",
+		},
+	})
+	myTemp := []tgmodels.InlineKeyboardButton{}
+
+	for i := 0; i < 4; i++ {
+		count := rules.Game.MaxShipCount - fight.Ships[i] - i
+		if i < rules.Game.ShipTypeCount {
+			myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
+				Text: strconv.Itoa(i+1) + "п:  " + strconv.Itoa(count), CallbackData: "pass#",
+			})
+		}
+
+	}
+
+	kb.InlineKeyboard = append(kb.InlineKeyboard, myTemp)
+	kb.InlineKeyboard = append(kb.InlineKeyboard, []tgmodels.InlineKeyboardButton{
+		tgmodels.InlineKeyboardButton{
+			Text: "ошибка: " + err, CallbackData: "apply",
 		},
 	})
 	return kb
