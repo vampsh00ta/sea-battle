@@ -100,12 +100,20 @@ func BattlefieldAction(user *models.User, turn, token string, end bool) (*tgmode
 		},
 	})
 	myTemp = []tgmodels.InlineKeyboardButton{}
-	sort.Sort(user.MyField.Ships)
-	for ship, count := range user.MyField.Ships {
-		myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
+	keys := make([]int, 0, len(user.MyField.Ships))
+	// extract keys
+	for k := range user.MyField.Ships {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
 
-			Text: strconv.Itoa(ship+1) + "п - " + strconv.Itoa(count), CallbackData: "pass#",
-		})
+	for _, ship := range keys {
+		count := user.MyField.Ships[ship]
+		if count > 0 {
+			myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
+				Text: strconv.Itoa(ship+1) + "п - " + strconv.Itoa(count), CallbackData: "pass#",
+			})
+		}
 
 	}
 	my.InlineKeyboard = append(my.InlineKeyboard, myTemp)
