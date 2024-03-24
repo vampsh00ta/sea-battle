@@ -7,7 +7,9 @@ type BattleField struct {
 }
 
 type Field struct {
-	Count   int  `json:"count"`
+	Count int `json:"count"`
+	Type  int `json:"type"`
+
 	Ship    bool `json:"ship"`
 	Marked  bool `json:"marked"`
 	Dead    bool `json:"dead"`

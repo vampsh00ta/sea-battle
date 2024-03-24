@@ -104,9 +104,9 @@ func (s service) JoinFight(ctx context.Context, code, tgId string) (models.Fight
 	if err != nil {
 		return models.Fight{}, err
 	}
-	if session.Stage == 1 {
-		return models.Fight{}, errors.New(rules.GameOnProgressErr)
-	}
+	//if session.Stage == 1 {
+	//	return models.Fight{}, errors.New(rules.GameOnProgressErr)
+	//}
 	if session.TgId1 == tgId {
 		return models.Fight{}, errors.New(rules.AlreadyJoined)
 	}
@@ -139,21 +139,6 @@ func (s service) JoinFight(ctx context.Context, code, tgId string) (models.Fight
 	return fightModel, nil
 }
 
-//	func (s service) AddShip(ctx context.Context, tgId string, p1, p2 entity.Point) error {
-//		b, err := s.redis.GetBattleField(ctx, tgId, true)
-//		if err != nil {
-//			return err
-//		}
-//		if err := entity.AddShip(b, p1, p2); err != nil {
-//			return err
-//		}
-//
-//		if err := s.redis.SetBattleField(ctx, tgId, b, true); err != nil {
-//			return err
-//		}
-//		return nil
-//
-// }
 func (s service) Shoot(ctx context.Context, req request.Shoot) (models.Fight, int, error) {
 	sessionId, err := s.psql.GetSessionByCode(ctx, req.Code)
 	if err != nil {

@@ -78,11 +78,12 @@ func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, er
 	}
 	if res == rules.Killed {
 		defender.Alive -= 1
+		(*defender).Ships[(*defender).Fields[x][y].Type] -= 1
+
 	}
 	if defender.Alive == 0 {
 		res = rules.Lost
 	}
-	fmt.Println(defender.Alive)
 	return res, nil
 
 }
@@ -140,6 +141,8 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 			b.Fields[i][x1].Ship = true
 			//b.Fields[x1][i].Marked = true
 			b.Fields[i][x1].Count = shipType + 1
+			b.Fields[i][x1].Type = shipType
+
 		}
 	} else {
 		dirs = [][]int{{0, 1}, {0, -1}, {1, 0}}
@@ -159,6 +162,7 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 			}
 			b.Fields[y1][i].Ship = true
 			//b.Fields[y1][i].Marked = true
+			b.Fields[y1][i].Type = shipType
 
 			b.Fields[y1][i].Count = shipType + 1
 
@@ -166,6 +170,7 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 	}
 	b.Ships[shipType] += 1
 	b.Alive += 1
+	fmt.Println(b.Ships)
 
 	var res int
 	for t := range b.Ships {
@@ -173,6 +178,7 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 			res += 1
 		}
 	}
+	fmt.Println(e.cfg.ShipTypeCount)
 	if res == e.cfg.ShipTypeCount {
 		return rules.PersonsReady, nil
 	}

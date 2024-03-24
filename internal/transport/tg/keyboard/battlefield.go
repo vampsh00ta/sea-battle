@@ -6,6 +6,8 @@ import (
 	"seabattle/internal/repository/models"
 	"seabattle/internal/service/action"
 	"seabattle/internal/transport/tg/request"
+	"sort"
+	"strconv"
 )
 
 func handlePoint(field models.Field) string {
@@ -76,9 +78,11 @@ func BattlefieldAction(user *models.User, turn, token string, end bool) (*tgmode
 			Text: "Твое поле", CallbackData: "pass#",
 		},
 	})
+	var myTemp []tgmodels.InlineKeyboardButton
+
 	for i := 0; i < 8; i++ {
 
-		myTemp := []tgmodels.InlineKeyboardButton{}
+		myTemp = []tgmodels.InlineKeyboardButton{}
 		for j := 0; j < 8; j++ {
 
 			myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
@@ -90,6 +94,22 @@ func BattlefieldAction(user *models.User, turn, token string, end bool) (*tgmode
 		my.InlineKeyboard = append(my.InlineKeyboard, myTemp)
 
 	}
+	my.InlineKeyboard = append(my.InlineKeyboard, []tgmodels.InlineKeyboardButton{
+		tgmodels.InlineKeyboardButton{
+			Text: "Твои корабли", CallbackData: "pass#",
+		},
+	})
+	myTemp = []tgmodels.InlineKeyboardButton{}
+	sort.Sort(user.MyField.Ships)
+	for ship, count := range user.MyField.Ships {
+		myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
+
+			Text: strconv.Itoa(ship+1) + "п - " + strconv.Itoa(count), CallbackData: "pass#",
+		})
+
+	}
+	my.InlineKeyboard = append(my.InlineKeyboard, myTemp)
+
 	enemy := &tgmodels.InlineKeyboardMarkup{
 		InlineKeyboard: [][]tgmodels.InlineKeyboardButton{},
 	}
@@ -169,6 +189,15 @@ func SetBattlefieldWaiting(fight *models.BattleField) *tgmodels.InlineKeyboardMa
 			Text: SettingReady, CallbackData: "pass#",
 		},
 	})
+	//myTemp := []tgmodels.InlineKeyboardButton{}
+	//for ship,count:=range user.MyField.Ships{
+	//	myTemp = append(myTemp, tgmodels.InlineKeyboardButton{
+	//
+	//		Text: strconv.Itoa(ship+1)+"п - " + strconv.Itoa(count), CallbackData: "pass#",
+	//	})
+	//
+	//}
+	//my.InlineKeyboard = append(my.InlineKeyboard, myTemp)
 	return kb
 
 }
