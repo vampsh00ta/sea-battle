@@ -11,6 +11,7 @@ type Session interface {
 	SetSession(ctx context.Context, sessionId string, session models.Session) error
 	GetSessionByChatId(ctx context.Context, idChatKey string) (string, error)
 	CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) (string, error)
+	CreateSessionOnePerson(ctx context.Context, idChat string) (string, error)
 }
 
 func (r Redis) SetSession(ctx context.Context, sessionId string, session models.Session) error {
@@ -27,6 +28,21 @@ func (r Redis) GetSession(ctx context.Context, sessionId string) (models.Session
 	return session, nil
 }
 
+func (r Redis) CreateSessionOnePerson(ctx context.Context, idChat string) (string, error) {
+	sessionId := battleSession + "_" + uuid.New().String()
+	var err error
+	session := models.Session{
+		TgId1: idChat,
+		TgId2: "",
+		Ready: 1,
+	}
+	err = r.client.HSet(ctx, sessionId, session).Err()
+	if err != nil {
+		return "", err
+	}
+
+	return sessionId, nil
+}
 func (r Redis) CreateSessionByChatId(ctx context.Context, idChatKey1, idChatKey2 string) (string, error) {
 	sessionId := battleSession + "_" + uuid.New().String()
 	var err error

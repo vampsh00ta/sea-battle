@@ -1,9 +1,9 @@
 package v1
 
 import (
-	"seabattle/internal/service"
-	"github.com/evrone/go-seabattle-template/pkg/logger"
 	"github.com/gin-gonic/gin"
+	"seabattle/internal/service"
+	"seabattle/pkg/logger"
 )
 
 type transport struct {

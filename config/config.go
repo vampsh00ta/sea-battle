@@ -15,9 +15,13 @@ type (
 		Log   `yaml:"logger"`
 		PG    `yaml:"postgres"`
 		Redis `yaml:"redis"`
+		Tg    `yaml:"tg"`
 		//RMQ  `yaml:"rabbitmq"`
 	}
-
+	Tg struct {
+		Apitoken string `env-required:"true" yaml:"apitoken"    env:"API_TOKEN"`
+		BaseURL  string `env-required:"true" yaml:"baseURL"    env:"API_TOKEN"`
+	}
 	// App -.
 	App struct {
 		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`

@@ -8,16 +8,21 @@ http:
 logger:
   log_level: 'debug'
   rollbar_env: 'seabattle'
+tg:
+  apitoken: "6466761857:AAE-D1djhHQHjD9qEVued77UJMxCQvuYm3c"
+  baseURL: ""
+
+
 redis:
   address: "localhost:6379"
   password: ""
   db: 0
 postgres:
-  username: ""
-  password: ""
+  username: "seabattle"
+  password: "seabattle"
   host: "localhost"
   port: "5432"
-  name: ""
+  name: "seabattle"
   pool_max: 10
 
 #rabbitmq:

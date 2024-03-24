@@ -3,53 +3,27 @@ package entity
 import (
 	"errors"
 	"fmt"
+	"math"
 	"seabattle/internal/repository/models"
+	"seabattle/internal/service/rules"
 )
 
 const (
-	AlreadyMarkedErr  = "already_marked"
-	AlreadyDeadErr    = "already_dead"
-	AlreadySetErr     = "already_set"
-	NotYourTurnErr    = "not_your_turn"
-	GameEndedErr      = "game_ended"
-	MaxShipCountErr   = "count_error"
-	WrongPlacementErr = "wrong_placement"
-)
-
-const (
-	maxShipCount = 4
-	ShipType1    = iota
+	ShipType1 = iota
 	ShipType2
 	ShipType3
 	ShipType4
 )
 
-const (
-	Missed = iota
-	Shooted
-	Killed
-	Lost = 3
-)
-
-const (
-	StagePick = iota
-	StageFight
-	StageEnd
-)
-
-const (
-	heigth = 8
-	weigth = 8
-)
-
 type Point struct {
-	X, Y int
+	X int `json:"x"`
+	Y int `json:"y"`
 }
 
 func NewBattleField() *models.BattleField {
-	fields := make([][]models.Field, heigth)
+	fields := make([][]models.Field, rules.Height)
 	for i := range fields {
-		fields[i] = make([]models.Field, weigth)
+		fields[i] = make([]models.Field, rules.Weight)
 	}
 	return &models.BattleField{
 
@@ -59,17 +33,19 @@ func NewBattleField() *models.BattleField {
 }
 
 func Shoot(attacker, defender *models.BattleField, x, y int) (int, error) {
-	res := Missed
+	res := rules.Missed
 	if attacker.Fields[x][y].Marked {
 		res = -1
-		return res, errors.New(AlreadyMarkedErr)
+		return res, errors.New(rules.AlreadyMarkedErr)
 	}
 	if defender.Fields[x][y].Ship {
 		(*defender).Fields[x][y].Marked = true
+		(*defender).Fields[x][y].Shooted = true
+
 		(*attacker).Fields[x][y].Marked = true
 		(*attacker).Fields[x][y].Ship = true
-
-		res = Shooted
+		(*attacker).Fields[x][y].Shooted = true
+		res = rules.Shooted
 		used := make(map[Point]bool)
 
 		var descCount func(x, y int)
@@ -80,7 +56,7 @@ func Shoot(attacker, defender *models.BattleField, x, y int) (int, error) {
 			if defender.Fields[x][y].Count == 0 {
 				(*defender).Fields[x][y].Dead = true
 				(*attacker).Fields[x][y].Dead = true
-				res = Killed
+				res = rules.Killed
 			}
 
 			used[Point{x, y}] = true
@@ -106,24 +82,24 @@ func Shoot(attacker, defender *models.BattleField, x, y int) (int, error) {
 		attacker.Fields[x][y].Marked = true
 
 	}
-	if res == Killed {
+	if res == rules.Killed {
 		defender.Alive -= 1
 	}
 	if defender.Alive == 0 {
-		res = Lost
+		res = rules.Lost
 	}
 	fmt.Println(defender.Alive)
 	return res, nil
 
 }
-func AddShip(b *models.BattleField, p1, p2 Point, shipType int) error {
+func AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 
 	x1 := min(p1.X, p2.X)
 	x2 := max(p1.X, p2.X)
 	y1 := min(p1.Y, p2.Y)
 
 	y2 := max(p1.Y, p2.Y)
-	dirs := [][]int{{-1, 0}, {0, -1}, {1, 0}, {0, 1}}
+	dirs := [][]int{{-1, 0}, {0, -1}, {1, 0}, {0, 0}, {0, 1}}
 
 	checkDir := func(x, y int, d [][]int) error {
 
@@ -133,31 +109,38 @@ func AddShip(b *models.BattleField, p1, p2 Point, shipType int) error {
 
 			if p.X < len(b.Fields[0]) && p.Y < len(b.Fields) && p.X >= 0 && p.Y >= 0 {
 				if b.Fields[p.Y][p.X].Ship {
-					return errors.New(WrongPlacementErr)
+					return errors.New(rules.WrongPlacementErr)
 				}
 			}
 		}
 		return nil
 	}
-	for i := y1; i >= y2; i-- {
-	}
+
 	if err := checkDir(x1, y1, dirs); err != nil {
-		return err
+		return 1, err
 
 	}
-	if b.Ships[shipType] >= maxShipCount-shipType+1 {
-		return errors.New(MaxShipCountErr)
+	var shipType int
+	shipType = int(math.Abs(float64((y2 - y1) + (x2 - x1))))
+	if shipType >= 3 {
+		return 0, errors.New(rules.WrongLengthErr)
+	}
+	if b.Ships[shipType] >= rules.MaxShipCount-shipType {
+		return 0, errors.New(rules.MaxShipCountErr)
 	}
 	if x1 == x2 {
+
 		dirs = [][]int{{0, 1}, {1, 0}, {-1, 0}}
 		for i := y1; i <= y2; i++ {
 			if err := checkDir(x1, i, dirs); err != nil {
+
 				for j := i; j >= y1; j-- {
-					b.Fields[i][x1].Ship = false
+					b.Fields[j][x1].Ship = false
 					//b.Fields[x1][i].Marked = true
-					b.Fields[i][x1].Count = 0
+					b.Fields[j][x1].Count = 0
 				}
-				return err
+
+				return 0, err
 
 			}
 			b.Fields[i][x1].Ship = true
@@ -170,34 +153,36 @@ func AddShip(b *models.BattleField, p1, p2 Point, shipType int) error {
 		for i := x1; i <= x2; i++ {
 			//fmt.Println(i)
 			if err := checkDir(i, y1, dirs); err != nil {
+
 				for j := i; j >= x1; j-- {
 					b.Fields[y1][j].Ship = false
 					//b.Fields[x1][i].Marked = true
 					b.Fields[y1][j].Count = 0
 
 				}
-				return err
+				return 0, err
 
 			}
 			b.Fields[y1][i].Ship = true
 			//b.Fields[y1][i].Marked = true
 
-			b.Fields[y1][i].Count = shipType
+			b.Fields[y1][i].Count = shipType + 1
 
 		}
 	}
 	b.Ships[shipType] += 1
 	b.Alive += 1
-	return nil
 
-}
-
-func IsReady(b *models.BattleField) bool {
-	for i := range b.Ships {
-		if b.Ships[i+1] < maxShipCount-i+1 {
-			return false
+	var res int
+	for t := range b.Ships {
+		if b.Ships[t]+t == rules.MaxShipCount {
+			res += 1
 		}
 	}
-	return true
+	if res == rules.ShipTypeCount {
+		return rules.PersonsReady, nil
+	}
+
+	return 0, nil
 
 }

@@ -4,14 +4,39 @@ import (
 	"context"
 	"encoding/json"
 	"seabattle/internal/repository/models"
+	"strconv"
 )
 
 type BattleField interface {
 	GetBattleField(ctx context.Context, idChatKey string, myField bool) (*models.BattleField, error)
 	GetBattleFields(ctx context.Context, idChatKey string) ([]*models.BattleField, error)
 	SetBattleField(ctx context.Context, idChatKey string, fields *models.BattleField, myField bool) error
+	SetPoint(ctx context.Context, idChatKey string, x, y int) error
+	GetPoint(ctx context.Context, idChatKey string) (int, int, error)
 }
 
+func (r Redis) GetPoint(ctx context.Context, idChatKey string) (int, int, error) {
+	x_redis := r.client.HGet(ctx, idChatKey, "curr_x")
+	if x_redis.Err() != nil {
+		return -1, -1, x_redis.Err()
+	}
+	xStr := x_redis.Val()
+	x, _ := strconv.Atoi(xStr)
+	y_redis := r.client.HGet(ctx, idChatKey, "curr_y")
+	if x_redis.Err() != nil {
+		return -1, -1, x_redis.Err()
+	}
+	yStr := y_redis.Val()
+	y, _ := strconv.Atoi(yStr)
+	return x, y, nil
+}
+func (r Redis) SetPoint(ctx context.Context, idChatKey string, x, y int) error {
+	err := r.client.HSet(ctx, idChatKey, "curr_x", x, "curr_y", y).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (r Redis) GetBattleFields(ctx context.Context, idChatKey string) ([]*models.BattleField, error) {
 	my, err := r.GetBattleField(ctx, idChatKey, true)
 	if err != nil {

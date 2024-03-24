@@ -7,3 +7,8 @@ type Fight struct {
 	SessionId string
 	Stage     int
 }
+
+const (
+	SettedBeginVector = iota
+	SettedEndVector
+)
