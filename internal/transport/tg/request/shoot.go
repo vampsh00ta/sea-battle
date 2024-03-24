@@ -1,9 +1,11 @@
 package request
 
-import "seabattle/internal/service/entity"
+import (
+	"seabattle/internal/service/action"
+)
 
 type Shoot struct {
 	Code  string       `json:"code"`
 	TgId  string       `json:"tgId"`
-	Point entity.Point `json:"point"`
+	Point action.Point `json:"point"`
 }

@@ -1,4 +1,4 @@
-package entity
+package action
 
 import (
 	"errors"
@@ -8,22 +8,16 @@ import (
 	"seabattle/internal/service/rules"
 )
 
-const (
-	ShipType1 = iota
-	ShipType2
-	ShipType3
-	ShipType4
-)
-
-type Point struct {
-	X int `json:"x"`
-	Y int `json:"y"`
+type Field interface {
+	NewBattleField() *models.BattleField
+	Shoot(attacker, defender *models.BattleField, x, y int) (int, error)
+	AddShip(b *models.BattleField, p1, p2 Point) (int, error)
 }
 
-func NewBattleField() *models.BattleField {
-	fields := make([][]models.Field, rules.Height)
+func (e action) NewBattleField() *models.BattleField {
+	fields := make([][]models.Field, e.cfg.Height)
 	for i := range fields {
-		fields[i] = make([]models.Field, rules.Weight)
+		fields[i] = make([]models.Field, e.cfg.Weight)
 	}
 	return &models.BattleField{
 
@@ -32,7 +26,7 @@ func NewBattleField() *models.BattleField {
 	}
 }
 
-func Shoot(attacker, defender *models.BattleField, x, y int) (int, error) {
+func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, error) {
 	res := rules.Missed
 	if attacker.Fields[x][y].Marked {
 		res = -1
@@ -92,7 +86,7 @@ func Shoot(attacker, defender *models.BattleField, x, y int) (int, error) {
 	return res, nil
 
 }
-func AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
+func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 
 	x1 := min(p1.X, p2.X)
 	x2 := max(p1.X, p2.X)
@@ -125,7 +119,7 @@ func AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 	if shipType >= 3 {
 		return 0, errors.New(rules.WrongLengthErr)
 	}
-	if b.Ships[shipType] >= rules.MaxShipCount-shipType {
+	if b.Ships[shipType] >= e.cfg.MaxShipCount-shipType {
 		return 0, errors.New(rules.MaxShipCountErr)
 	}
 	if x1 == x2 {
@@ -175,11 +169,11 @@ func AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 
 	var res int
 	for t := range b.Ships {
-		if b.Ships[t]+t == rules.MaxShipCount {
+		if b.Ships[t]+t == e.cfg.MaxShipCount {
 			res += 1
 		}
 	}
-	if res == rules.ShipTypeCount {
+	if res == e.cfg.ShipTypeCount {
 		return rules.PersonsReady, nil
 	}
 

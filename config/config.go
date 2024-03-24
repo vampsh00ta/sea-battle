@@ -53,38 +53,19 @@ type (
 		Password string `env-required:"true" yaml:"password" env-default:"password"`
 		Db       int    `env-required:"true" yaml:"db" env-default:"db"`
 	}
-	// RMQ -.
-	RMQ struct {
-		ServerExchange string `env-required:"true" yaml:"rpc_server_exchange" env:"RMQ_RPC_SERVER"`
-		ClientExchange string `env-required:"true" yaml:"rpc_client_exchange" env:"RMQ_RPC_CLIENT"`
-		URL            string `env-required:"true"                            env:"RMQ_URL"`
+)
+type (
+	Game struct {
+		Main `yaml:"main"`
+	}
+
+	Main struct {
+		Height        int `env-required:"true" yaml:"height" env:"height"`
+		Weight        int `env-required:"true" yaml:"weight" env:"weight"`
+		MaxShipCount  int `env-required:"true" yaml:"max_ship_count" env:"max_ship_count"`
+		ShipTypeCount int `env-required:"true" yaml:"ship_type_count" env:"ship_type_count"`
 	}
 )
-
-//// NewConfig returns seabattle config.
-//func New() (*Config, error) {
-//	cfg := &Config{}
-//	err := godotenv.Load(".env")
-//	if err != nil {
-//		return nil, err
-//	}
-//	currPath, err := os.Getwd()
-//	if err != nil {
-//		return nil, err
-//	}
-//	filePath := currPath + os.Getenv("path") + "/" + os.Getenv("env") + ".yml"
-//	err = seabattleenv.ReadConfig(filePath, cfg)
-//	if err != nil {
-//		return nil, fmt.Errorf("config error: %w", err)
-//	}
-//
-//	err = seabattleenv.ReadEnv(cfg)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return cfg, nil
-//}
 
 func New() (*Config, error) {
 	err := godotenv.Load(".env")
@@ -105,6 +86,33 @@ func New() (*Config, error) {
 
 	d := yaml.NewDecoder(file)
 	var cfg *Config
+
+	if err := d.Decode(&cfg); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+
+}
+
+func NewGame() (*Game, error) {
+	err := godotenv.Load(".env")
+	if err != nil {
+		return nil, err
+	}
+	currPath, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	filePath := currPath + os.Getenv("path") + "/" + "game.yaml"
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	d := yaml.NewDecoder(file)
+	var cfg *Game
 
 	if err := d.Decode(&cfg); err != nil {
 		return nil, err

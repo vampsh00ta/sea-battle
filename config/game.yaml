@@ -1,0 +1,6 @@
+
+main:
+  height: 8
+  weight: 8
+  max_ship_count: 4
+  ship_type_count: 3

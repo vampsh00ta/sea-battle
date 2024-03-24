@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	tgmodels "github.com/go-telegram/bot/models"
 	"seabattle/internal/repository/models"
-	"seabattle/internal/service/entity"
+	"seabattle/internal/service/action"
 	"seabattle/internal/transport/tg/request"
 )
 
@@ -44,7 +44,7 @@ func Battlefield(fight *models.BattleField, sessionId string) *tgmodels.InlineKe
 		res := []tgmodels.InlineKeyboardButton{}
 		for j := 0; j < 8; j++ {
 			callbackData := request.SetShip{
-				Point: entity.Point{
+				Point: action.Point{
 					X: j,
 					Y: i,
 				},
@@ -106,7 +106,7 @@ func BattlefieldAction(user *models.User, turn, token string, end bool) (*tgmode
 		for j := 0; j < 8; j++ {
 			if user.TgId == turn && !end {
 				callbackDataModel := request.Shoot{
-					Point: entity.Point{
+					Point: action.Point{
 						X: j,
 						Y: i,
 					},

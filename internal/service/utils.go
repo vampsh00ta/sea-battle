@@ -3,13 +3,13 @@ package service
 import (
 	"context"
 	"seabattle/internal/repository/models"
-	"seabattle/internal/service/entity"
+	//"seabattle/internal/service/entity"
 	"seabattle/internal/service/rules"
 )
 
-func setUserParams(tgId string, user *models.User) {
-	user.MyField = entity.NewBattleField()
-	user.EnemyField = entity.NewBattleField()
+func (s service) setUserParams(tgId string, user *models.User) {
+	user.MyField = s.action.NewBattleField()
+	user.EnemyField = s.action.NewBattleField()
 	user.TgId = tgId
 	user.CurrX = "-1"
 	user.CurrY = "-1"

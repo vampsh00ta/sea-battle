@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 	"seabattle/internal/repository/models"
-	"seabattle/internal/service/entity"
+	"seabattle/internal/service/action"
+	//"seabattle/internal/service/action"
 	"seabattle/internal/service/rules"
 	"seabattle/internal/transport/tg/request"
 )
@@ -16,7 +17,7 @@ type Fight interface {
 	//AddShip(ctx context.Context, tgId string, p1, p2 entity.Point) error
 	JoinFight(ctx context.Context, code, tgId string) (models.Fight, error)
 	CreateFight(ctx context.Context, tgId string) (string, error)
-	SetShip(ctx context.Context, tgId string, point entity.Point, token string) (*models.BattleField, int, error)
+	SetShip(ctx context.Context, tgId string, point action.Point, token string) (*models.BattleField, int, error)
 	SetFieldQueryId(ctx context.Context, tgId, queryId string, my bool) error
 	//EmptyField() *models.BattleField
 
@@ -40,14 +41,14 @@ func (s service) SetFieldQueryId(ctx context.Context, tgId, queryId string, my b
 	return s.redis.SetFieldQueryId(ctx, tgId, queryId, my)
 }
 
-func (s service) SetShip(ctx context.Context, tgId string, point entity.Point, token string) (*models.BattleField, int, error) {
+func (s service) SetShip(ctx context.Context, tgId string, point action.Point, token string) (*models.BattleField, int, error) {
 	x0, y0, err := s.redis.GetPoint(ctx, tgId)
 	var res int
 	if err != nil {
 		return nil, -1, err
 	}
 
-	po := entity.Point{X: x0, Y: y0}
+	po := action.Point{X: x0, Y: y0}
 	b, err := s.redis.GetBattleField(ctx, tgId, true)
 	if err != nil {
 		return nil, -1, err
@@ -59,7 +60,7 @@ func (s service) SetShip(ctx context.Context, tgId string, point entity.Point, t
 		res = rules.ShipSecondPoint
 		return b, res, nil
 	} else {
-		isReady, err := entity.AddShip(b, po, point)
+		isReady, err := s.action.AddShip(b, po, point)
 		if err != nil {
 			if err := s.redis.SetPoint(ctx, tgId, -1, -1); err != nil {
 				return nil, -1, err
@@ -124,8 +125,8 @@ func (s service) JoinFight(ctx context.Context, code, tgId string) (models.Fight
 	}
 
 	var user1, user2 models.User
-	setUserParams(session.TgId1, &user1)
-	setUserParams(session.TgId2, &user2)
+	s.setUserParams(session.TgId1, &user1)
+	s.setUserParams(session.TgId2, &user2)
 	fightModel := models.Fight{
 		User1:     user1,
 		User2:     user2,
@@ -171,7 +172,7 @@ func (s service) Shoot(ctx context.Context, req request.Shoot) (models.Fight, in
 	fight, err := s.redis.GetFight(ctx, sessionId)
 	getAttacker(&fight)
 
-	res, err := entity.Shoot(fight.User1.EnemyField, fight.User2.MyField, req.Point.Y, req.Point.X)
+	res, err := s.action.Shoot(fight.User1.EnemyField, fight.User2.MyField, req.Point.Y, req.Point.X)
 	if err != nil {
 		return models.Fight{}, -1, err
 	}
