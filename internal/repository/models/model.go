@@ -1,9 +1,9 @@
 package models
 
 type BattleField struct {
-	Fields [][]Field `json:"fields"`
 	Ships  map[int]int
-	Alive  int `json:"alive"`
+	Alive  int       `json:"alive"`
+	Fields [][]Field `json:"fields"`
 }
 
 type Field struct {
@@ -19,7 +19,8 @@ type Field struct {
 type Session struct {
 	TgId1 string `json:"tgId1" redis:"tgId1"`
 	TgId2 string `json:"tgId2" redis:"tgId2"`
-	Ready int    `json:"ready" redis:"ready"`
-	Stage int    `json:"stage" redis:"stage"`
 	Turn  string `json:"turn" redis:"turn"`
+
+	Ready int `json:"ready" redis:"ready"`
+	Stage int `json:"stage" redis:"stage"`
 }

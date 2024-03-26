@@ -41,7 +41,7 @@ func (t Transport) CreateFight(ctx context.Context, bot *tgbotapi.Bot, update *t
 	tgChatId := update.Message.Chat.ID
 	inviteCode, err := t.srvc.CreateFight(ctx, strconv.Itoa(int(tgChatId)))
 	if err != nil {
-		fmt.Println(err)
+
 		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   err.Error(),
@@ -61,8 +61,6 @@ func (t Transport) Pass(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels
 		CallbackQueryID: update.CallbackQuery.ID,
 		ShowAlert:       false,
 	})
-
-	return
 
 }
 func (t Transport) JoinFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
@@ -149,15 +147,13 @@ func (t Transport) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tg
 	for user, keyboard := range toSend {
 		myQueryIdInt, _ := strconv.Atoi(user.MyFieldQueryId)
 		enemyQueryIdInt, _ := strconv.Atoi(user.EnemyFieldQueryId)
-		fmt.Println(myQueryIdInt, enemyQueryIdInt)
-		_, err := bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
+		bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
 
 			ChatID:      user.TgId,
 			MessageID:   myQueryIdInt,
 			ReplyMarkup: keyboard[0],
 		})
-		fmt.Println(err)
-		_, err = bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
+		bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
 
 			ChatID:      user.TgId,
 			MessageID:   enemyQueryIdInt,
@@ -265,7 +261,6 @@ func (t Transport) SetShip(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 		kb = keyboard.SetBattlefieldWaiting(b)
 
 	case rules.PersonsReady:
-		text = "working"
 
 		t.createGameAction(ctx, bot, update, req.Code)
 		return

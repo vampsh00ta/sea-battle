@@ -33,23 +33,23 @@ func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, er
 		return res, errors.New(rules.AlreadyMarkedErr)
 	}
 	if defender.Fields[x][y].Ship {
-		(*defender).Fields[x][y].Marked = true
-		(*defender).Fields[x][y].Shooted = true
+		defender.Fields[x][y].Marked = true
+		defender.Fields[x][y].Shooted = true
 
-		(*attacker).Fields[x][y].Marked = true
-		(*attacker).Fields[x][y].Ship = true
-		(*attacker).Fields[x][y].Shooted = true
+		attacker.Fields[x][y].Marked = true
+		attacker.Fields[x][y].Ship = true
+		attacker.Fields[x][y].Shooted = true
 		res = rules.Shooted
 		used := make(map[Point]bool)
 
 		var descCount func(x, y int)
 
 		descCount = func(x, y int) {
-			(*defender).Fields[x][y].Count -= 1
-			(*attacker).Fields[x][y].Count -= 1
+			defender.Fields[x][y].Count -= 1
+			attacker.Fields[x][y].Count -= 1
 			if defender.Fields[x][y].Count == 0 {
-				(*defender).Fields[x][y].Dead = true
-				(*attacker).Fields[x][y].Dead = true
+				defender.Fields[x][y].Dead = true
+				attacker.Fields[x][y].Dead = true
 				res = rules.Killed
 			}
 
@@ -62,8 +62,8 @@ func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, er
 					if defender.Fields[p.X][p.Y].Ship {
 						descCount(p.X, p.Y)
 					} else if defender.Fields[x][y].Count == 0 {
-						(*defender).Fields[p.X][p.Y].Marked = true
-						(*attacker).Fields[p.X][p.Y].Marked = true
+						defender.Fields[p.X][p.Y].Marked = true
+						attacker.Fields[p.X][p.Y].Marked = true
 					}
 				}
 
@@ -78,7 +78,7 @@ func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, er
 	}
 	if res == rules.Killed {
 		defender.Alive -= 1
-		(*defender).Ships[(*defender).Fields[x][y].Type] -= 1
+		defender.Ships[defender.Fields[x][y].Type] -= 1
 
 	}
 	if defender.Alive == 0 {
@@ -115,8 +115,7 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 		return 1, err
 
 	}
-	var shipType int
-	shipType = int(math.Abs(float64((y2 - y1) + (x2 - x1))))
+	shipType := int(math.Abs(float64((y2 - y1) + (x2 - x1))))
 	if shipType >= e.cfg.ShipTypeCount {
 		return 0, errors.New(rules.WrongLengthErr)
 	}

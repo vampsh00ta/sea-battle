@@ -58,11 +58,7 @@ func (s service) setReady(ctx context.Context, res *int, ready int, token string
 //		return res
 //	}
 func getAttacker(fight *models.Fight) {
-	if fight.User1.TgId == fight.Turn {
-		return
-	} else {
+	if fight.User1.TgId != fight.Turn {
 		fight.User1, fight.User2 = fight.User2, fight.User1
 	}
-
-	return
 }

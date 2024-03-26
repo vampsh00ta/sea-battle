@@ -50,31 +50,26 @@ func (r Redis) GetBattleFields(ctx context.Context, idChatKey string) ([]*models
 }
 
 func (r Redis) GetBattleField(ctx context.Context, idChatKey string, me bool) (*models.BattleField, error) {
-	var err error
 	var key string
 	if me {
 		key = myField
 	} else {
 		key = enemyField
 	}
-	if err != nil {
-		return nil, err
-	}
 
 	res := r.client.HGet(ctx, idChatKey, key)
 	if res.Err() != nil {
-		return nil, err
+		return nil, res.Err()
 	}
 	dataStr := res.Val()
 	var data models.BattleField
-	err = json.Unmarshal([]byte(dataStr), &data)
+	err := json.Unmarshal([]byte(dataStr), &data)
 	if err != nil {
 		return nil, err
 	}
 	return &data, err
 }
 func (r Redis) SetBattleField(ctx context.Context, idChatKey string, fields *models.BattleField, me bool) error {
-	var err error
 	var key string
 	if me {
 		key = myField

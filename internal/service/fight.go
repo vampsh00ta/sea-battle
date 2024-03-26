@@ -43,10 +43,10 @@ func (s service) SetFieldQueryId(ctx context.Context, tgId, queryId string, my b
 
 func (s service) SetShip(ctx context.Context, tgId string, point action.Point, token string) (*models.BattleField, int, error) {
 	x0, y0, err := s.redis.GetPoint(ctx, tgId)
-	var res int
 	if err != nil {
 		return nil, -1, err
 	}
+	var res int
 
 	po := action.Point{X: x0, Y: y0}
 	b, err := s.redis.GetBattleField(ctx, tgId, true)
@@ -54,7 +54,7 @@ func (s service) SetShip(ctx context.Context, tgId string, point action.Point, t
 		return nil, -1, err
 	}
 	if x0 == -1 && y0 == -1 {
-		if err := s.redis.SetPoint(ctx, tgId, point.X, point.Y); err != nil {
+		if err = s.redis.SetPoint(ctx, tgId, point.X, point.Y); err != nil {
 			return nil, -1, err
 		}
 		res = rules.ShipSecondPoint
@@ -104,9 +104,9 @@ func (s service) JoinFight(ctx context.Context, code, tgId string) (models.Fight
 	if err != nil {
 		return models.Fight{}, err
 	}
-	//if session.Stage == 1 {
-	//	return models.Fight{}, errors.New(rules.GameOnProgressErr)
-	//}
+	if session.Stage == 1 {
+		return models.Fight{}, errors.New(rules.GameOnProgressErr)
+	}
 	if session.TgId1 == tgId {
 		return models.Fight{}, errors.New(rules.AlreadyJoined)
 	}
@@ -117,13 +117,13 @@ func (s service) JoinFight(ctx context.Context, code, tgId string) (models.Fight
 	session.Turn = firstTurn
 	session.Ready = 0
 	session.Stage = rules.StagePick
-	if err != nil {
-		return models.Fight{}, err
-	}
+
 	if err := s.redis.SetSession(ctx, sessionId, session); err != nil {
 		return models.Fight{}, err
 	}
-
+	if err != nil {
+		return models.Fight{}, err
+	}
 	var user1, user2 models.User
 	s.setUserParams(session.TgId1, &user1)
 	s.setUserParams(session.TgId2, &user2)
@@ -155,6 +155,10 @@ func (s service) Shoot(ctx context.Context, req request.Shoot) (models.Fight, in
 		return models.Fight{}, -1, errors.New(rules.NotYourTurnErr)
 	}
 	fight, err := s.redis.GetFight(ctx, sessionId)
+	if err != nil {
+		return models.Fight{}, -1, err
+	}
+
 	getAttacker(&fight)
 
 	res, err := s.action.Shoot(fight.User1.EnemyField, fight.User2.MyField, req.Point.Y, req.Point.X)

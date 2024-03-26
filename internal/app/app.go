@@ -68,8 +68,6 @@ func NewPooling(cfg *config.Config) {
 	})
 	rep := redisrep.New(clientRedis)
 
-	//// Service
-	//p := entity.Point{X: 3, Y: 5}
 	gameCfg, err := config.NewGame()
 	if err != nil {
 		log.Fatalf("Config error: %s", err)

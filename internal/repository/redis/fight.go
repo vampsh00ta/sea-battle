@@ -24,7 +24,6 @@ func (r Redis) SetFight(ctx context.Context, fight models.Fight) error {
 
 func (r Redis) GetFight(ctx context.Context, sessionId string) (models.Fight, error) {
 	var session models.Session
-	var err error
 	if err := r.client.HGetAll(ctx, sessionId).Scan(&session); err != nil {
 		return models.Fight{}, err
 	}
