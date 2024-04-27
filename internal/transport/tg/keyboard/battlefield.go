@@ -25,7 +25,7 @@ func handlePoint(field models.Field) string {
 	if field.Marked {
 		return " # "
 	}
-	return "  *  "
+	return "🌊"
 }
 
 const (

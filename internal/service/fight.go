@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/rand"
 	"seabattle/internal/repository/models"
 	"seabattle/internal/service/action"
@@ -66,7 +65,7 @@ func (s service) SetShip(ctx context.Context, tgId string, point action.Point, t
 				return nil, -1, err
 			}
 			res = rules.ShipFirstPoint
-			fmt.Println(err, "set ship")
+			//fmt.Println(err, "set ship")
 			return b, res, err
 		}
 		if err := s.redis.SetPoint(ctx, tgId, -1, -1); err != nil {

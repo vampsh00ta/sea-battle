@@ -2,5 +2,5 @@
 main:
   height: 8
   weight: 8
-  max_ship_count: 2
-  ship_type_count: 2
+  max_ship_count: 1
+  ship_type_count: 1
