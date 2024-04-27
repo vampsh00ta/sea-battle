@@ -10,13 +10,16 @@ logger:
   rollbar_env: 'seabattle'
 
 postgres:
-  username: "maidtp"
-  password: "maidtp"
-  host: "localhost"
+  username: "seabattle"
+  password: "seabattle"
+  host: "db"
   port: "5432"
-  name: "maidtp"
+  name: "seabattle"
   pool_max: 10
-
+redis:
+  address: "redis:6379"
+  password: ""
+  db: 0
 #rabbitmq:
 #  rpc_server_exchange: 'rpc_server'
 #  rpc_client_exchange: 'rpc_client'
