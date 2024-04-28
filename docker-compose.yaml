@@ -2,7 +2,7 @@ version: '3.8'
 services:
   seabattle:
     build:
-      context: api_template
+      context: .
     image: goseabattle
     container_name: goseabattle
     env_file:

@@ -4,6 +4,7 @@ import (
 	"context"
 	tgbotapi "github.com/go-telegram/bot"
 	"github.com/redis/go-redis/v9"
+	kafkago "github.com/segmentio/kafka-go"
 	"log"
 	"os"
 	"os/signal"
@@ -72,8 +73,14 @@ func NewPooling(cfg *config.Config) {
 	if err != nil {
 		log.Fatalf("Config error: %s", err)
 	}
-	srvc := service.New(rep, psql, gameCfg)
-	tr := tg.New(srvc)
+
+	kafka := &kafkago.Writer{
+		Addr:                   kafkago.TCP("kafka:9092"),
+		Topic:                  "search",
+		Balancer:               &kafkago.LeastBytes{},
+		AllowAutoTopicCreation: true,
+	}
+	srvc := service.New(rep, psql, gameCfg, kafka)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -88,35 +95,8 @@ func NewPooling(cfg *config.Config) {
 	if err != nil {
 		panic(err)
 	}
-	//handlers.New(bot, srvc, log)
-	//bot.DeleteWebhook(ctx, &tgbotapi.DeleteWebhookParams{
-	//	true,
-	//})
 
-	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
-		"/creategame",
-		tgbotapi.MatchTypeExact, tr.CreateFight,
-	)
-	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
-		"/start",
-		tgbotapi.MatchTypePrefix, tr.JoinFight,
-	)
-	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
-		"/joingame",
-		tgbotapi.MatchTypePrefix, tr.JoinFight,
-	)
-	bot.RegisterHandler(tgbotapi.HandlerTypeCallbackQueryData,
-		"set#",
-		tgbotapi.MatchTypePrefix, tr.SetShip,
-	)
-	bot.RegisterHandler(tgbotapi.HandlerTypeCallbackQueryData,
-		"pass#",
-		tgbotapi.MatchTypePrefix, tr.Pass,
-	)
-	bot.RegisterHandler(tgbotapi.HandlerTypeCallbackQueryData,
-		"shoot#",
-		tgbotapi.MatchTypePrefix, tr.GameAction,
-	)
+	tg.New(bot, srvc)
 
 	bot.Start(ctx)
 

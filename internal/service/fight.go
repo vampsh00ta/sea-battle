@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+	kafkago "github.com/segmentio/kafka-go"
 	"math/rand"
-	"seabattle/internal/repository/models"
+	"seabattle/internal/models"
 	"seabattle/internal/service/action"
 	//"seabattle/internal/service/action"
 	"seabattle/internal/service/rules"
@@ -18,11 +20,26 @@ type Fight interface {
 	CreateFight(ctx context.Context, tgId string) (string, error)
 	SetShip(ctx context.Context, tgId string, point action.Point, token string) (*models.BattleField, int, error)
 	SetFieldQueryId(ctx context.Context, tgId, queryId string, my bool) error
+	SearchFight(ctx context.Context, tgId int) error
+
 	//EmptyField() *models.BattleField
 
 	InitFightAction(ctx context.Context, token string) (*models.Fight, error)
 }
 
+func (s service) SearchFight(ctx context.Context, tgId int) error {
+	msg := models.SearchMsg{TgId: tgId}
+	value, err := msg.Bytes()
+	if err != nil {
+		return err
+	}
+
+	if err := s.kafka.WriteMessages(ctx, kafkago.Message{Value: value}); err != nil {
+		return err
+	}
+	fmt.Println("kafka")
+	return nil
+}
 func (s service) InitFightAction(ctx context.Context, token string) (*models.Fight, error) {
 	sessionId, err := s.psql.GetSessionByCode(ctx, token)
 	if err != nil {

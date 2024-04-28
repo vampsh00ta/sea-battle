@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"seabattle/internal/repository/models"
+	"seabattle/internal/models"
 )
 
 type Session interface {

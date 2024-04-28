@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"seabattle/internal/repository/models"
+	"seabattle/internal/models"
 	"seabattle/internal/service/rules"
 )
 

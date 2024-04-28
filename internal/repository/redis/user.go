@@ -3,16 +3,16 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"seabattle/internal/repository/models"
+	models2 "seabattle/internal/models"
 )
 
 type User interface {
-	GetUserByChatId(ctx context.Context, idChatKey string) (models.User, error)
-	SetUser(ctx context.Context, user models.User) error
+	GetUserByChatId(ctx context.Context, idChatKey string) (models2.User, error)
+	SetUser(ctx context.Context, user models2.User) error
 	SetFieldQueryId(ctx context.Context, tgId, queryId string, my bool) error
 }
 
-func (r Redis) SetUser(ctx context.Context, user models.User) error {
+func (r Redis) SetUser(ctx context.Context, user models2.User) error {
 
 	my, err := json.Marshal(user.MyField)
 	if err != nil {
@@ -22,7 +22,7 @@ func (r Redis) SetUser(ctx context.Context, user models.User) error {
 	if err != nil {
 		return err
 	}
-	userRedis := models.UserRedis{
+	userRedis := models2.UserRedis{
 		MyField:           string(my),
 		EnemyField:        string(enemy),
 		CurrX:             user.CurrX,
@@ -35,19 +35,19 @@ func (r Redis) SetUser(ctx context.Context, user models.User) error {
 	}
 	return nil
 }
-func (r Redis) GetUser(ctx context.Context, tgId string) (models.User, error) {
-	var user models.UserRedis
+func (r Redis) GetUser(ctx context.Context, tgId string) (models2.User, error) {
+	var user models2.UserRedis
 	if err := r.client.HGetAll(ctx, tgId).Scan(&user); err != nil {
-		return models.User{}, err
+		return models2.User{}, err
 	}
-	var my, enemy models.BattleField
+	var my, enemy models2.BattleField
 	if err := json.Unmarshal([]byte(user.MyField), &my); err != nil {
-		return models.User{}, err
+		return models2.User{}, err
 	}
 	if err := json.Unmarshal([]byte(user.EnemyField), &enemy); err != nil {
-		return models.User{}, err
+		return models2.User{}, err
 	}
-	userModel := models.User{
+	userModel := models2.User{
 		TgId:              tgId,
 		MyField:           &my,
 		EnemyField:        &enemy,
@@ -58,10 +58,10 @@ func (r Redis) GetUser(ctx context.Context, tgId string) (models.User, error) {
 	}
 	return userModel, nil
 }
-func (r Redis) GetUserByChatId(ctx context.Context, idChatKey string) (models.User, error) {
-	var user models.User
+func (r Redis) GetUserByChatId(ctx context.Context, idChatKey string) (models2.User, error) {
+	var user models2.User
 	if err := r.client.HGetAll(ctx, idChatKey).Scan(&user); err != nil {
-		return models.User{}, nil
+		return models2.User{}, nil
 	}
 	return user, nil
 }
@@ -72,9 +72,9 @@ func (r Redis) SetFieldQueryId(ctx context.Context, tgId, queryId string, my boo
 
 	switch my {
 	case true:
-		queryField = models.MyFieldQueryId
+		queryField = models2.MyFieldQueryId
 	case false:
-		queryField = models.EnemyFieldQueryId
+		queryField = models2.EnemyFieldQueryId
 	}
 	if err := r.client.HSet(ctx, tgId, queryField, queryId).Err(); err != nil {
 		return err

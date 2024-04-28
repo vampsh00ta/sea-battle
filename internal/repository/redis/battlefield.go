@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
-	"seabattle/internal/repository/models"
+	"seabattle/internal/models"
 	"strconv"
 )
 

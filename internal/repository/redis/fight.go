@@ -2,25 +2,25 @@ package redis
 
 import (
 	"context"
-	"seabattle/internal/repository/models"
+	models2 "seabattle/internal/models"
 	"sync"
 )
 
 type Fight interface {
-	GetFight(ctx context.Context, sessionID string) (models.Fight, error)
-	SetFight(ctx context.Context, fight models.Fight) error
+	GetFight(ctx context.Context, sessionID string) (models2.Fight, error)
+	SetFight(ctx context.Context, fight models2.Fight) error
 }
 
-func (r Redis) SetFight(ctx context.Context, fight models.Fight) error {
+func (r Redis) SetFight(ctx context.Context, fight models2.Fight) error {
 	wg := &sync.WaitGroup{}
 	res := make(chan error, 2)
-	users := []models.User{
+	users := []models2.User{
 		fight.User1,
 		fight.User2,
 	}
 	for _, user := range users {
 		wg.Add(1)
-		go func(wg *sync.WaitGroup, user models.User) {
+		go func(wg *sync.WaitGroup, user models2.User) {
 			defer wg.Done()
 			err := r.SetUser(ctx, user)
 			res <- err
@@ -40,10 +40,10 @@ func (r Redis) SetFight(ctx context.Context, fight models.Fight) error {
 	return nil
 }
 
-func (r Redis) GetFight(ctx context.Context, sessionId string) (models.Fight, error) {
-	var session models.Session
+func (r Redis) GetFight(ctx context.Context, sessionId string) (models2.Fight, error) {
+	var session models2.Session
 	if err := r.client.HGetAll(ctx, sessionId).Scan(&session); err != nil {
-		return models.Fight{}, err
+		return models2.Fight{}, err
 	}
 
 	wg := &sync.WaitGroup{}
@@ -52,7 +52,7 @@ func (r Redis) GetFight(ctx context.Context, sessionId string) (models.Fight, er
 		session.TgId1,
 		session.TgId2,
 	}
-	resUsers := make([]models.User, 2)
+	resUsers := make([]models2.User, 2)
 	for i, tgID := range tgIDs {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup, tgID string, i int) {
@@ -70,11 +70,11 @@ func (r Redis) GetFight(ctx context.Context, sessionId string) (models.Fight, er
 
 	for err := range res {
 		if err != nil {
-			return models.Fight{}, err
+			return models2.Fight{}, err
 		}
 	}
 
-	fight := models.Fight{
+	fight := models2.Fight{
 		User1: resUsers[0],
 		User2: resUsers[1],
 		Turn:  session.Turn,

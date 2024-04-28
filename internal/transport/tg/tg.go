@@ -6,7 +6,7 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram/bot"
 	tgmodels "github.com/go-telegram/bot/models"
-	"seabattle/internal/repository/models"
+	"seabattle/internal/models"
 	"seabattle/internal/service"
 	"seabattle/internal/service/rules"
 	"seabattle/internal/transport/tg/keyboard"
@@ -20,10 +20,37 @@ type Transport struct {
 	srvc service.Service
 }
 
-func New(s service.Service) *Transport {
-	return &Transport{
-		s,
-	}
+func New(bot *tgbotapi.Bot, s service.Service) {
+	tr := Transport{srvc: s}
+	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
+		"/creategame",
+		tgbotapi.MatchTypeExact, tr.CreateFight,
+	)
+	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
+		"/start",
+		tgbotapi.MatchTypePrefix, tr.JoinFight,
+	)
+	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
+		"/search_battle",
+		tgbotapi.MatchTypePrefix, tr.Search,
+	)
+	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
+		"/joingame",
+		tgbotapi.MatchTypePrefix, tr.JoinFight,
+	)
+	bot.RegisterHandler(tgbotapi.HandlerTypeCallbackQueryData,
+		"set#",
+		tgbotapi.MatchTypePrefix, tr.SetShip,
+	)
+	bot.RegisterHandler(tgbotapi.HandlerTypeCallbackQueryData,
+		"pass#",
+		tgbotapi.MatchTypePrefix, tr.Pass,
+	)
+	bot.RegisterHandler(tgbotapi.HandlerTypeCallbackQueryData,
+		"shoot#",
+		tgbotapi.MatchTypePrefix, tr.GameAction,
+	)
+
 }
 
 // func (t Transport) Test(ctx context.Context, bot *tgbotapi.Bot, update *models.Update) {
@@ -37,6 +64,18 @@ const (
 	inviteLink = "http://telegram.me/OceanBattle_bot?start="
 )
 
+func (t Transport) Search(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
+	tgChatId := update.Message.Chat.ID
+	fmt.Println("ASdsadasd")
+	if err := t.srvc.SearchFight(ctx, int(tgChatId)); err != nil {
+		return
+	}
+	bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   fmt.Sprintf("Идет поиск боя ..."),
+	})
+
+}
 func (t Transport) CreateFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
 	tgChatId := update.Message.Chat.ID
 	inviteCode, err := t.srvc.CreateFight(ctx, strconv.Itoa(int(tgChatId)))

@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"github.com/google/uuid"
-	"seabattle/internal/repository/models"
+	"seabattle/internal/models"
 )
 
 type Session interface {
