@@ -6,22 +6,23 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram/bot"
 	tgmodels "github.com/go-telegram/bot/models"
-	"seabattle/internal/models"
-	"seabattle/internal/service"
+	isrvc "seabattle/internal/app/service"
+	"seabattle/internal/entity"
 	"seabattle/internal/service/rules"
 	"seabattle/internal/transport/tg/keyboard"
 	"seabattle/internal/transport/tg/request"
+	//tg2 "seabattle/internal/transport/tgv2"
 	"strings"
 
 	"strconv"
 )
 
-type Transport struct {
-	srvc service.Service
+type Transportv2 struct {
+	srvc isrvc.Service
 }
 
-func New(bot *tgbotapi.Bot, s service.Service) {
-	tr := Transport{srvc: s}
+func New(bot *tgbotapi.Bot, s isrvc.Service) {
+	tr := Transportv2{srvc: s}
 	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
 		"/creategame",
 		tgbotapi.MatchTypeExact, tr.CreateFight,
@@ -30,10 +31,10 @@ func New(bot *tgbotapi.Bot, s service.Service) {
 		"/start",
 		tgbotapi.MatchTypePrefix, tr.JoinFight,
 	)
-	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
-		"/search_battle",
-		tgbotapi.MatchTypePrefix, tr.Search,
-	)
+	//bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
+	//	"/search_battle",
+	//	tgbotapi.MatchTypePrefix, tr.Search,
+	//)
 	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
 		"/joingame",
 		tgbotapi.MatchTypePrefix, tr.JoinFight,
@@ -53,7 +54,7 @@ func New(bot *tgbotapi.Bot, s service.Service) {
 
 }
 
-// func (t Transport) Test(ctx context.Context, bot *tgbotapi.Bot, update *models.Update) {
+// func (t Transportv2) Test(ctx context.Context, bot *tgbotapi.Bot, update *models.Update) {
 //
 //		_, err := bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 //			ChatID: update.Message.Chat.ID,
@@ -64,48 +65,48 @@ const (
 	inviteLink = "http://telegram.me/OceanBattle_bot?start="
 )
 
-func (t Transport) Search(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
-	tgChatId := update.Message.Chat.ID
-	fmt.Println("ASdsadasd")
-	if err := t.srvc.SearchFight(ctx, int(tgChatId)); err != nil {
-		return
-	}
-	bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("Идет поиск боя ..."),
-	})
-
-}
-func (t Transport) CreateFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
+//	func (t Transportv2) Search(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
+//		tgChatId := update.Message.Chat.ID
+//		fmt.Println("ASdsadasd")
+//		if err := t.srvc.SearchFight(ctx, int(tgChatId)); err != nil {
+//			return
+//		}
+//		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+//			ChatID: update.Message.Chat.ID,
+//			Text:   fmt.Sprintf("Идет поиск боя ..."),
+//		})
+//
+// }
+func (t Transportv2) CreateFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
 	tgChatId := update.Message.Chat.ID
 	inviteCode, err := t.srvc.CreateFight(ctx, strconv.Itoa(int(tgChatId)))
 	if err != nil {
 
-		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   err.Error(),
 		})
 		return
 	}
 
-	bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+	_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   fmt.Sprintf("Отравь эту ссылку своему другу \n ``` %s ``` ", inviteLink+inviteCode),
 	})
 
 }
 
-func (t Transport) Pass(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
-	bot.AnswerCallbackQuery(ctx, &tgbotapi.AnswerCallbackQueryParams{
+func (t Transportv2) Pass(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
+	_, _ = bot.AnswerCallbackQuery(ctx, &tgbotapi.AnswerCallbackQueryParams{
 		CallbackQueryID: update.CallbackQuery.ID,
 		ShowAlert:       false,
 	})
 
 }
-func (t Transport) JoinFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
+func (t Transportv2) JoinFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
 	msg := update.Message.Text
 	if len(msg) <= len("/start")+1 {
-		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   "err",
 		})
@@ -121,36 +122,27 @@ func (t Transport) JoinFight(ctx context.Context, bot *tgbotapi.Bot, update *tgm
 		})
 		return
 	}
-	a, _ := bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-		ChatID:      f.User1.TgId,
-		Text:        "Раставь корабли",
-		ReplyMarkup: keyboard.SetBattlefield(f.User1.MyField, code, keyboard.FirstPoint),
-	})
-	if err := t.srvc.SetFieldQueryId(ctx, f.User1.TgId, strconv.Itoa(a.ID), true); err != nil {
-		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-			ChatID: update.CallbackQuery.Message.Chat.ID,
-			Text:   err.Error(),
+	for i := range f.Users {
+		a, _ := bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+			ChatID:      f.Users[i].TgId,
+			Text:        "Раставь корабли",
+			ReplyMarkup: keyboard.SetBattlefield(f.Users[i].MyField, code, keyboard.FirstPoint),
 		})
-		return
-	}
-	b, _ := bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-		ChatID:      f.User2.TgId,
-		Text:        "Раставь корабли",
-		ReplyMarkup: keyboard.SetBattlefield(f.User2.MyField, code, keyboard.FirstPoint),
-	})
-	if err := t.srvc.SetFieldQueryId(ctx, f.User2.TgId, strconv.Itoa(b.ID), true); err != nil {
-		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-			ChatID: update.CallbackQuery.Message.Chat.ID,
-			Text:   err.Error(),
-		})
-		return
+		if err := t.srvc.SetFieldQueryId(ctx, code, f.Users[i].TgId, strconv.Itoa(a.ID), true); err != nil {
+			bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+				ChatID: f.Users[i].TgId,
+				Text:   err.Error(),
+			})
+			return
+		}
+
 	}
 
 }
-func (t Transport) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
+func (t Transportv2) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
 	tgId := update.CallbackQuery.Message.Chat.ID
 	dataStr := strings.Split(update.CallbackQuery.Data, "#")[1]
-	var req request.Shoot
+	var req entity.Shoot
 	if err := json.Unmarshal([]byte(dataStr), &req); err != nil {
 		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.CallbackQuery.Message.Chat.ID,
@@ -176,23 +168,23 @@ func (t Transport) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tg
 		end = true
 
 	}
-	toSend := make(map[models.User][]*tgmodels.InlineKeyboardMarkup)
-	user_my1, user_enemy1 := keyboard.BattlefieldAction(&fight.User1, fight.Turn, req.Code, end)
-	toSend[fight.User1] = []*tgmodels.InlineKeyboardMarkup{user_my1, user_enemy1}
+	toSend := make(map[entity.User][]*tgmodels.InlineKeyboardMarkup)
+	user_my1, user_enemy1 := keyboard.BattlefieldAction(&fight.Users[0], fight.Turn, req.Code, end)
+	toSend[fight.Users[0]] = []*tgmodels.InlineKeyboardMarkup{user_my1, user_enemy1}
 
-	user_my2, user_enemy2 := keyboard.BattlefieldAction(&fight.User2, fight.Turn, req.Code, end)
-	toSend[fight.User2] = []*tgmodels.InlineKeyboardMarkup{user_my2, user_enemy2}
+	user_my2, user_enemy2 := keyboard.BattlefieldAction(&fight.Users[1], fight.Turn, req.Code, end)
+	toSend[fight.Users[1]] = []*tgmodels.InlineKeyboardMarkup{user_my2, user_enemy2}
 
 	for user, keyboard := range toSend {
 		myQueryIdInt, _ := strconv.Atoi(user.MyFieldQueryId)
 		enemyQueryIdInt, _ := strconv.Atoi(user.EnemyFieldQueryId)
-		bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
+		_, _ = bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
 
 			ChatID:      user.TgId,
 			MessageID:   myQueryIdInt,
 			ReplyMarkup: keyboard[0],
 		})
-		bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
+		_, _ = bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
 
 			ChatID:      user.TgId,
 			MessageID:   enemyQueryIdInt,
@@ -216,7 +208,7 @@ func (t Transport) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tg
 	}
 }
 
-func (t Transport) createGameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update, token string) {
+func (t Transportv2) createGameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update, token string) {
 	fight, err := t.srvc.InitFightAction(ctx, token)
 
 	if err != nil {
@@ -226,16 +218,17 @@ func (t Transport) createGameAction(ctx context.Context, bot *tgbotapi.Bot, upda
 		})
 		return
 	}
-	toSend := make(map[models.User][]*tgmodels.InlineKeyboardMarkup)
+	toSend := make(map[entity.User][]*tgmodels.InlineKeyboardMarkup)
 
-	user_my1, user_enemy1 := keyboard.BattlefieldAction(&fight.User1, fight.Turn, token, false)
-	toSend[fight.User1] = []*tgmodels.InlineKeyboardMarkup{user_my1, user_enemy1}
+	user_my1, user_enemy1 := keyboard.BattlefieldAction(&fight.Users[0], fight.Turn, token, false)
+	toSend[fight.Users[0]] = []*tgmodels.InlineKeyboardMarkup{user_my1, user_enemy1}
 
-	user_my2, user_enemy2 := keyboard.BattlefieldAction(&fight.User2, fight.Turn, token, false)
-	toSend[fight.User2] = []*tgmodels.InlineKeyboardMarkup{user_my2, user_enemy2}
+	user_my2, user_enemy2 := keyboard.BattlefieldAction(&fight.Users[1], fight.Turn, token, false)
+	toSend[fight.Users[1]] = []*tgmodels.InlineKeyboardMarkup{user_my2, user_enemy2}
+
 	for user, keyboard := range toSend {
 		idQueryInt, _ := strconv.Atoi(user.MyFieldQueryId)
-		bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
+		_, _ = bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
 
 			ChatID:      user.TgId,
 			MessageID:   idQueryInt,
@@ -247,7 +240,7 @@ func (t Transport) createGameAction(ctx context.Context, bot *tgbotapi.Bot, upda
 			Text:        "Бой начался",
 			ReplyMarkup: keyboard[1],
 		})
-		if err := t.srvc.SetFieldQueryId(ctx, user.TgId, strconv.Itoa(field.ID), false); err != nil {
+		if err := t.srvc.SetFieldQueryId(ctx, token, user.TgId, strconv.Itoa(field.ID), false); err != nil {
 			bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 				ChatID: user.TgId,
 				Text:   err.Error(),
@@ -259,7 +252,7 @@ func (t Transport) createGameAction(ctx context.Context, bot *tgbotapi.Bot, upda
 
 }
 
-func (t Transport) SetShip(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
+func (t Transportv2) SetShip(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
 	dataStr := strings.Split(update.CallbackQuery.Data, "#")[1]
 	var req request.SetShip
 	if err := json.Unmarshal([]byte(dataStr), &req); err != nil {
@@ -269,15 +262,16 @@ func (t Transport) SetShip(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 		})
 		return
 	}
-	tgId := update.CallbackQuery.Message.Chat.ID
-	b, statusCode, err := t.srvc.SetShip(ctx, strconv.Itoa(int(tgId)), req.Point, req.Code)
+	tgId := strconv.Itoa(int(update.CallbackQuery.Message.Chat.ID))
+	setShipReq := entity.SetShip{TgId: tgId, Point: req.Point, Code: req.Code}
+	b, statusCode, err := t.srvc.SetShip(ctx, setShipReq)
 
 	if err != nil && !checkError(err) {
 		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.CallbackQuery.Message.Chat.ID,
 			Text:   err.Error(),
 		})
-		bot.AnswerCallbackQuery(ctx, &tgbotapi.AnswerCallbackQueryParams{
+		_, _ = bot.AnswerCallbackQuery(ctx, &tgbotapi.AnswerCallbackQueryParams{
 			CallbackQueryID: update.CallbackQuery.ID,
 			ShowAlert:       false,
 		})
@@ -315,6 +309,5 @@ func (t Transport) SetShip(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 
 		ReplyMarkup: kb,
 	})
-	fmt.Println(err)
 
 }

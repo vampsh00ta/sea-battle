@@ -16,7 +16,6 @@ type (
 		PG    `yaml:"postgres"`
 		Redis `yaml:"redis"`
 		Tg    `yaml:"tg"`
-		//RMQ  `yaml:"rabbitmq"`
 	}
 	Tg struct {
 		Apitoken string `env-required:"true" yaml:"apitoken"    env:"API_TOKEN"`

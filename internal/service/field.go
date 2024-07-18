@@ -1,32 +1,18 @@
-package action
+package service
 
 import (
 	"errors"
-	"fmt"
 	"math"
-	"seabattle/internal/models"
+	"seabattle/internal/entity"
 	"seabattle/internal/service/rules"
 )
 
 type Field interface {
-	NewBattleField() *models.BattleField
-	Shoot(attacker, defender *models.BattleField, x, y int) (int, error)
-	AddShip(b *models.BattleField, p1, p2 Point) (int, error)
+	shootEntity(attacker, defender *entity.BattleField, x, y int) (int, error)
+	addShipEntity(b *entity.BattleField, p1, p2 entity.Point) (int, error)
 }
 
-func (e action) NewBattleField() *models.BattleField {
-	fields := make([][]models.Field, e.cfg.Height)
-	for i := range fields {
-		fields[i] = make([]models.Field, e.cfg.Weight)
-	}
-	return &models.BattleField{
-
-		Fields: fields,
-		Ships:  make(map[int]int),
-	}
-}
-
-func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, error) {
+func (e service) shootEntity(attacker, defender *entity.BattleField, x, y int) (int, error) {
 	res := rules.Missed
 	if attacker.Fields[x][y].Marked {
 		res = -1
@@ -40,7 +26,7 @@ func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, er
 		attacker.Fields[x][y].Ship = true
 		attacker.Fields[x][y].Shooted = true
 		res = rules.Shooted
-		used := make(map[Point]bool)
+		used := make(map[entity.Point]bool)
 
 		var descCount func(x, y int)
 
@@ -53,11 +39,11 @@ func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, er
 				res = rules.Killed
 			}
 
-			used[Point{x, y}] = true
+			used[entity.Point{x, y}] = true
 			dirs := [][]int{{-1, 0}, {0, -1}, {1, 0}, {0, 1}}
 			for _, dir := range dirs {
 				x0, y0 := dir[0], dir[1]
-				p := Point{x + x0, y + y0}
+				p := entity.Point{x + x0, y + y0}
 				if _, ok := used[p]; !ok && p.X < len(defender.Fields[0]) && p.Y < len(defender.Fields) && p.X >= 0 && p.Y >= 0 {
 					if defender.Fields[p.X][p.Y].Ship {
 						descCount(p.X, p.Y)
@@ -87,7 +73,7 @@ func (e action) Shoot(attacker, defender *models.BattleField, x, y int) (int, er
 	return res, nil
 
 }
-func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
+func (e service) addShipEntity(b *entity.BattleField, p1, p2 entity.Point) (int, error) {
 
 	x1 := min(p1.X, p2.X)
 	x2 := max(p1.X, p2.X)
@@ -100,7 +86,7 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 
 		for _, dir := range d {
 			x0, y0 := dir[0], dir[1]
-			p := Point{x + x0, y + y0}
+			p := entity.Point{x + x0, y + y0}
 
 			if p.X < len(b.Fields[0]) && p.Y < len(b.Fields) && p.X >= 0 && p.Y >= 0 {
 				if b.Fields[p.Y][p.X].Ship {
@@ -116,10 +102,10 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 
 	}
 	shipType := int(math.Abs(float64((y2 - y1) + (x2 - x1))))
-	if shipType >= e.cfg.ShipTypeCount {
+	if shipType >= e.gameConf.ShipTypeCount {
 		return 0, errors.New(rules.WrongLengthErr)
 	}
-	if b.Ships[shipType] >= e.cfg.MaxShipCount-shipType {
+	if b.Ships[shipType] >= e.gameConf.MaxShipCount-shipType {
 		return 0, errors.New(rules.MaxShipCountErr)
 	}
 	if x1 == x2 {
@@ -169,16 +155,14 @@ func (e action) AddShip(b *models.BattleField, p1, p2 Point) (int, error) {
 	}
 	b.Ships[shipType] += 1
 	b.Alive += 1
-	fmt.Println(b.Ships)
 
 	var res int
 	for t := range b.Ships {
-		if b.Ships[t]+t == e.cfg.MaxShipCount {
+		if b.Ships[t]+t == e.gameConf.MaxShipCount {
 			res += 1
 		}
 	}
-	fmt.Println(e.cfg.ShipTypeCount)
-	if res == e.cfg.ShipTypeCount {
+	if res == e.gameConf.ShipTypeCount {
 		return rules.PersonsReady, nil
 	}
 

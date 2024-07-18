@@ -3,19 +3,17 @@ package seabattle
 import (
 	"context"
 	tgbotapi "github.com/go-telegram/bot"
-	"github.com/redis/go-redis/v9"
 	kafkago "github.com/segmentio/kafka-go"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"os"
 	"os/signal"
-	psqlrep "seabattle/internal/repository/psql"
-	redisrep "seabattle/internal/repository/redis"
+	"seabattle/config"
+	mongorep "seabattle/internal/repository/mongodb"
 	"seabattle/internal/service"
 	"seabattle/internal/transport/tg"
 	"syscall"
-
-	"seabattle/config"
-	"seabattle/pkg/client"
 )
 
 //// Run creates objects via constructors.
@@ -54,20 +52,13 @@ import (
 func NewPooling(cfg *config.Config) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	//ctx := context.Background()
-	pg, err := client.NewPostgresClient(ctx, 5, cfg.PG)
+	mong, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		panic(err)
 	}
-	defer pg.Close()
-	psql := psqlrep.New(pg)
+	collection := mong.Database("sea_battle").Collection("fight")
 
-	clientRedis := redis.NewClient(&redis.Options{
-		Addr:     cfg.Redis.Address,
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.Db,
-	})
-	rep := redisrep.New(clientRedis)
+	rep := mongorep.New(collection)
 
 	gameCfg, err := config.NewGame()
 	if err != nil {
@@ -80,7 +71,7 @@ func NewPooling(cfg *config.Config) {
 		Balancer:               &kafkago.LeastBytes{},
 		AllowAutoTopicCreation: true,
 	}
-	srvc := service.New(rep, psql, gameCfg, kafka)
+	srvc := service.New(rep, gameCfg, kafka)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -95,7 +86,6 @@ func NewPooling(cfg *config.Config) {
 	if err != nil {
 		panic(err)
 	}
-
 	tg.New(bot, srvc)
 
 	bot.Start(ctx)

@@ -3,15 +3,14 @@ package keyboard
 import (
 	"encoding/json"
 	tgmodels "github.com/go-telegram/bot/models"
-	models2 "seabattle/internal/models"
-	"seabattle/internal/service/action"
+	"seabattle/internal/entity"
 	"seabattle/internal/service/rules"
 	"seabattle/internal/transport/tg/request"
 	"sort"
 	"strconv"
 )
 
-func handlePoint(field models2.Field) string {
+func handlePoint(field entity.Field) string {
 
 	if field.Dead {
 		return "❌"
@@ -37,7 +36,7 @@ const (
 	AvailableShips   = "Доступные корабли"
 )
 
-func Battlefield(fight *models2.BattleField, sessionId string) *tgmodels.InlineKeyboardMarkup {
+func Battlefield(fight *entity.BattleField, sessionId string) *tgmodels.InlineKeyboardMarkup {
 
 	kb := &tgmodels.InlineKeyboardMarkup{
 		InlineKeyboard: [][]tgmodels.InlineKeyboardButton{},
@@ -48,7 +47,7 @@ func Battlefield(fight *models2.BattleField, sessionId string) *tgmodels.InlineK
 		res := []tgmodels.InlineKeyboardButton{}
 		for j := 0; j < 8; j++ {
 			callbackData := request.SetShip{
-				Point: action.Point{
+				Point: entity.Point{
 					X: j,
 					Y: i,
 				},
@@ -69,7 +68,7 @@ func Battlefield(fight *models2.BattleField, sessionId string) *tgmodels.InlineK
 	return kb
 
 }
-func BattlefieldAction(user *models2.User, turn, token string, end bool) (*tgmodels.InlineKeyboardMarkup, *tgmodels.InlineKeyboardMarkup) {
+func BattlefieldAction(user *entity.User, turn, token string, end bool) (*tgmodels.InlineKeyboardMarkup, *tgmodels.InlineKeyboardMarkup) {
 
 	my := &tgmodels.InlineKeyboardMarkup{
 		InlineKeyboard: [][]tgmodels.InlineKeyboardButton{},
@@ -135,8 +134,8 @@ func BattlefieldAction(user *models2.User, turn, token string, end bool) (*tgmod
 		enemyTemp := []tgmodels.InlineKeyboardButton{}
 		for j := 0; j < 8; j++ {
 			if user.TgId == turn && !end {
-				callbackDataModel := request.Shoot{
-					Point: action.Point{
+				callbackDataModel := entity.Shoot{
+					Point: entity.Point{
 						X: j,
 						Y: i,
 					},
@@ -176,7 +175,7 @@ func BattlefieldAction(user *models2.User, turn, token string, end bool) (*tgmod
 	return my, enemy
 
 }
-func SetBattlefieldWaiting(fight *models2.BattleField) *tgmodels.InlineKeyboardMarkup {
+func SetBattlefieldWaiting(fight *entity.BattleField) *tgmodels.InlineKeyboardMarkup {
 
 	kb := &tgmodels.InlineKeyboardMarkup{
 		InlineKeyboard: [][]tgmodels.InlineKeyboardButton{},
@@ -211,7 +210,7 @@ func SetBattlefieldWaiting(fight *models2.BattleField) *tgmodels.InlineKeyboardM
 	return kb
 
 }
-func SetBattlefield(fight *models2.BattleField, sessionId string, text string) *tgmodels.InlineKeyboardMarkup {
+func SetBattlefield(fight *entity.BattleField, sessionId string, text string) *tgmodels.InlineKeyboardMarkup {
 	kb := &tgmodels.InlineKeyboardMarkup{}
 
 	setKb := Battlefield(fight, sessionId)
@@ -245,7 +244,7 @@ func SetBattlefield(fight *models2.BattleField, sessionId string, text string) *
 
 }
 
-func SetBattlefieldWithError(fight *models2.BattleField, sessionId string, text, err string) *tgmodels.InlineKeyboardMarkup {
+func SetBattlefieldWithError(fight *entity.BattleField, sessionId string, text, err string) *tgmodels.InlineKeyboardMarkup {
 
 	kb := &tgmodels.InlineKeyboardMarkup{}
 

@@ -1,8 +1,10 @@
 package request
 
-import "seabattle/internal/service/action"
+import (
+	"seabattle/internal/entity"
+)
 
 type SetShip struct {
 	Code  string       `json:"code"`
-	Point action.Point `json:"point"`
+	Point entity.Point `json:"point"`
 }

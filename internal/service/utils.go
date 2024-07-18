@@ -2,43 +2,40 @@ package service
 
 import (
 	"context"
-	"seabattle/internal/models"
+	"seabattle/internal/entity"
 	//"seabattle/internal/service/entity"
 	"seabattle/internal/service/rules"
 )
 
-func (s service) setUserParams(tgId string, user *models.User) {
-	user.MyField = s.action.NewBattleField()
-	user.EnemyField = s.action.NewBattleField()
-	user.TgId = tgId
-	user.CurrX = "-1"
-	user.CurrY = "-1"
+func (s service) setUserParams(user *entity.User) {
+	user.MyField = entity.NewBattleField(s.gameConf.Height, s.gameConf.Weight)
+	user.EnemyField = entity.NewBattleField(s.gameConf.Height, s.gameConf.Weight)
+	user.CurrX = -1
+	user.CurrY = -1
 }
 
 func (s service) setReady(ctx context.Context, res *int, ready int, token string) error {
 	if ready != rules.PersonsReady {
 		return nil
 	}
-	sessionId, err := s.psql.GetSessionByCode(ctx, token)
-	if err != nil {
-		return err
-	}
-	session, err := s.redis.GetSession(ctx, sessionId)
+	fight, err := s.mongo.GetFight(ctx, token)
+
 	if err != nil {
 		return err
 	}
 	if ready == rules.PersonsReady {
-		session.Ready += 1
+		fight.Ready += 1
 
 	}
-	switch session.Ready {
+	switch fight.Ready {
 	case 1:
 		*res = rules.PersonReady
 	case 2:
 		*res = rules.PersonsReady
 
 	}
-	if err := s.redis.SetSession(ctx, sessionId, session); err != nil {
+	if err := s.mongo.UpdateFight(ctx, fight); err != nil {
+
 		return err
 	}
 
@@ -57,8 +54,13 @@ func (s service) setReady(ctx context.Context, res *int, ready int, token string
 //
 //		return res
 //	}
-func getAttacker(fight *models.Fight) {
-	if fight.User1.TgId != fight.Turn {
-		fight.User1, fight.User2 = fight.User2, fight.User1
+
+func getCurrRoles(fight *entity.Fight) (attacker *entity.User, defender *entity.User) {
+	if fight.Turn == fight.Users[0].TgId {
+		return &fight.Users[0], &fight.Users[1]
+	} else {
+		return &fight.Users[1], &fight.Users[0]
+
 	}
+
 }

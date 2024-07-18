@@ -2,34 +2,45 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	kafkago "github.com/segmentio/kafka-go"
 	"math/rand"
-	"seabattle/internal/models"
-	"seabattle/internal/service/action"
-	//"seabattle/internal/service/action"
+	"seabattle/internal/entity"
+
 	"seabattle/internal/service/rules"
-	"seabattle/internal/transport/tg/request"
 )
 
-type Fight interface {
-	Shoot(ctx context.Context, req request.Shoot) (models.Fight, int, error)
-	//AddShip(ctx context.Context, tgId string, p1, p2 entity.Point) error
-	JoinFight(ctx context.Context, code, tgId string) (models.Fight, error)
-	CreateFight(ctx context.Context, tgId string) (string, error)
-	SetShip(ctx context.Context, tgId string, point action.Point, token string) (*models.BattleField, int, error)
-	SetFieldQueryId(ctx context.Context, tgId, queryId string, my bool) error
-	SearchFight(ctx context.Context, tgId int) error
-
-	//EmptyField() *models.BattleField
-
-	InitFightAction(ctx context.Context, token string) (*models.Fight, error)
-}
+//type Fight interface {
+//	Shoot(ctx context.Context, req entity.Shoot) (entity.Fight, int, error)
+//	//AddShip(ctx context.Context, tgId string, p1, p2 entity.Point) error
+//	JoinFight(ctx context.Context, code, tgId string) (entity.Fight, error)
+//	CreateFight(ctx context.Context, tgId string) (string, error)
+//	SetShip(ctx context.Context, req entity.SetShip) (*entity.BattleField, int, error)
+//	SetFieldQueryId(ctx context.Context, sessionId, tgId, queryId string, my bool) error
+//	//SearchFight(ctx context.Context, tgId int) error
+//	InitFightAction(ctx context.Context, token string) (*entity.Fight, error)
+//}
 
 func (s service) SearchFight(ctx context.Context, tgId int) error {
-	msg := models.SearchMsg{TgId: tgId}
-	value, err := msg.Bytes()
+	//connection, err := rmq.OpenConnection("queue", "tcp", "localhost:6379", 1, nil)
+	//if err != nil {
+	//	return err
+	//}
+	//taskQueue, err := connection.OpenQueue("game_search")
+	//if err != nil {
+	//	return err
+	//}
+	//msg := entity.SearchFightMsg{Rating: rand.Intn(1000), TgID: rand.Intn(10000)}
+	//taskBytes, err := json.Marshal(msg)
+	//if err != nil {
+	//	return err
+	//}
+	//if err := taskQueue.PublishBytes(taskBytes); err != nil {
+	//	return err
+	//}
+	msg := entity.SearchFight{Rating: rand.Intn(1000), TgID: rand.Intn(10000)}
+	value, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
@@ -37,61 +48,62 @@ func (s service) SearchFight(ctx context.Context, tgId int) error {
 	if err := s.kafka.WriteMessages(ctx, kafkago.Message{Value: value}); err != nil {
 		return err
 	}
-	fmt.Println("kafka")
 	return nil
 }
-func (s service) InitFightAction(ctx context.Context, token string) (*models.Fight, error) {
-	sessionId, err := s.psql.GetSessionByCode(ctx, token)
-	if err != nil {
-		return nil, err
-	}
+func (s service) InitFightAction(ctx context.Context, token string) (*entity.Fight, error) {
+	//sessionId, err := s.psql.GetSessionByCode(ctx, token)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	fight, err := s.redis.GetFight(ctx, sessionId)
+	fight, err := s.mongo.GetFight(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 	return &fight, nil
 }
 
-func (s service) SetFieldQueryId(ctx context.Context, tgId, queryId string, my bool) error {
-	return s.redis.SetFieldQueryId(ctx, tgId, queryId, my)
+func (s service) SetFieldQueryId(ctx context.Context, sessionID, tgID, queryID string, my bool) error {
+	return s.mongo.SetFieldQueryId(ctx, sessionID, tgID, queryID, my)
 }
 
-func (s service) SetShip(ctx context.Context, tgId string, point action.Point, token string) (*models.BattleField, int, error) {
-	x0, y0, err := s.redis.GetPoint(ctx, tgId)
+func (s service) SetShip(ctx context.Context, req entity.SetShip) (*entity.BattleField, int, error) {
+
+	p, err := s.mongo.GetPoint(ctx, req.Code, req.TgId)
 	if err != nil {
 		return nil, -1, err
 	}
 	var res int
 
-	po := action.Point{X: x0, Y: y0}
-	b, err := s.redis.GetBattleField(ctx, tgId, true)
+	b, err := s.mongo.GetBattleField(ctx, req.Code, req.TgId, true)
 	if err != nil {
 		return nil, -1, err
 	}
-	if x0 == -1 && y0 == -1 {
-		if err = s.redis.SetPoint(ctx, tgId, point.X, point.Y); err != nil {
+	switch {
+	case p.X == -1 && p.Y == -1:
+		if err = s.mongo.SetPoint(ctx, req.Code, req.TgId, req.Point); err != nil {
 			return nil, -1, err
 		}
+
 		res = rules.ShipSecondPoint
 		return b, res, nil
-	} else {
-		isReady, err := s.action.AddShip(b, po, point)
+	default:
+
+		isReady, err := s.addShipEntity(b, p, req.Point)
 		if err != nil {
-			if err := s.redis.SetPoint(ctx, tgId, -1, -1); err != nil {
+			if err := s.mongo.SetPoint(ctx, req.Code, req.TgId, entity.Point{-1, -1}); err != nil {
 				return nil, -1, err
 			}
 			res = rules.ShipFirstPoint
-			//fmt.Println(err, "set ship")
 			return b, res, err
 		}
-		if err := s.redis.SetPoint(ctx, tgId, -1, -1); err != nil {
+		if err := s.mongo.SetPoint(ctx, req.Code, req.TgId, entity.Point{-1, -1}); err != nil {
 			return nil, -1, err
 		}
-		if err := s.redis.SetBattleField(ctx, tgId, b, true); err != nil {
+		if err := s.mongo.SetBattleField(ctx, req.Code, req.TgId, b, true); err != nil {
 			return nil, -1, err
 		}
-		if err := s.setReady(ctx, &res, isReady, token); err != nil {
+		if err := s.setReady(ctx, &res, isReady, req.Code); err != nil {
 			return nil, -1, err
 		}
 	}
@@ -99,105 +111,88 @@ func (s service) SetShip(ctx context.Context, tgId string, point action.Point, t
 
 }
 func (s service) CreateFight(ctx context.Context, tgId string) (string, error) {
-	session, err := s.redis.CreateSessionOnePerson(ctx, tgId)
-	if err != nil {
-		return "", err
-	}
+
 	code := s.GetInviteCode()
-	if err := s.psql.AddSession(ctx, code, session); err != nil {
-		return "", err
+	//if err := s.psql.AddSession(ctx, code, session); err != nil {
+	//	return "", err
+	//}
+	if err := s.mongo.CreateFight(ctx, entity.Fight{
+		Users: []entity.User{
+			{
+				TgId: tgId,
+			},
+		},
+		SessionId: code,
+	}); err != nil {
+		return code, nil
 	}
 
 	return code, nil
 }
 
-func (s service) JoinFight(ctx context.Context, code, tgId string) (models.Fight, error) {
-	sessionId, err := s.psql.GetSessionByCode(ctx, code)
+func (s service) JoinFight(ctx context.Context, sessionID, tgId string) (entity.Fight, error) {
+
+	preFight, err := s.mongo.GetFight(ctx, sessionID)
 	if err != nil {
-		return models.Fight{}, err
+		return entity.Fight{}, err
 	}
-	session, err := s.redis.GetSession(ctx, sessionId)
-	if err != nil {
-		return models.Fight{}, err
+	if preFight.Stage == 1 {
+		return entity.Fight{}, errors.New(rules.GameOnProgressErr)
 	}
-	if session.Stage == 1 {
-		return models.Fight{}, errors.New(rules.GameOnProgressErr)
-	}
-	if session.TgId1 == tgId {
-		return models.Fight{}, errors.New(rules.AlreadyJoined)
+	if len(preFight.Users) == 2 {
+		return entity.Fight{}, errors.New(rules.AlreadyJoined)
 	}
 
-	session.TgId2 = tgId
-	tgIds := []string{session.TgId1, session.TgId2}
+	joinedUser := entity.User{
+		TgId: tgId,
+	}
+	tgIds := []string{preFight.Users[0].TgId, joinedUser.TgId}
 	firstTurn := tgIds[rand.Intn(2)]
-	session.Turn = firstTurn
-	session.Ready = 0
-	session.Stage = rules.StagePick
 
-	if err := s.redis.SetSession(ctx, sessionId, session); err != nil {
-		return models.Fight{}, err
+	preFight.Turn = firstTurn
+	preFight.Stage = rules.StagePick
+	preFight.Users = append(preFight.Users, joinedUser)
+
+	for i := range preFight.Users {
+		s.setUserParams(&preFight.Users[i])
+
 	}
-	if err != nil {
-		return models.Fight{}, err
+
+	if err := s.mongo.UpdateFight(ctx, preFight); err != nil {
+		return entity.Fight{}, err
 	}
-	var user1, user2 models.User
-	s.setUserParams(session.TgId1, &user1)
-	s.setUserParams(session.TgId2, &user2)
-	fightModel := models.Fight{
-		User1:     user1,
-		User2:     user2,
-		Turn:      session.Turn,
-		SessionId: sessionId,
-		State:     rules.StagePick}
-	if err := s.redis.SetFight(ctx, fightModel); err != nil {
-		return models.Fight{}, err
-	}
-	return fightModel, nil
+	return preFight, nil
 }
 
-func (s service) Shoot(ctx context.Context, req request.Shoot) (models.Fight, int, error) {
-	sessionId, err := s.psql.GetSessionByCode(ctx, req.Code)
+func (s service) Shoot(ctx context.Context, req entity.Shoot) (entity.Fight, int, error) {
+
+	fight, err := s.mongo.GetFight(ctx, req.Code)
 	if err != nil {
-		return models.Fight{}, -1, err
+		return entity.Fight{}, -1, err
 	}
-	session, err := s.redis.GetSession(ctx, sessionId)
-	if err != nil {
-		return models.Fight{}, -1, err
-	}
-	if session.Stage == rules.StageEnd {
-		return models.Fight{}, -1, errors.New(rules.GameEndedErr)
-	}
-	if session.Turn != req.TgId {
-		return models.Fight{}, -1, errors.New(rules.NotYourTurnErr)
-	}
-	fight, err := s.redis.GetFight(ctx, sessionId)
-	if err != nil {
-		return models.Fight{}, -1, err
+	switch {
+	case fight.Stage == rules.StageEnd:
+		return entity.Fight{}, -1, errors.New(rules.GameEndedErr)
+	case fight.Turn != req.TgId:
+		return entity.Fight{}, -1, errors.New(rules.NotYourTurnErr)
 	}
 
-	getAttacker(&fight)
+	attacker, defender := getCurrRoles(&fight)
 
-	res, err := s.action.Shoot(fight.User1.EnemyField, fight.User2.MyField, req.Point.Y, req.Point.X)
+	res, err := s.shootEntity(attacker.EnemyField, attacker.MyField, req.Point.Y, req.Point.X)
 	if err != nil {
-		return models.Fight{}, -1, err
+		return entity.Fight{}, -1, err
 	}
 	switch res {
 	case rules.Missed:
-
-		//turn := fight.User2.TgId
-		fight.Turn = fight.User2.TgId
-		session.Turn = fight.User2.TgId
+		fight.Turn = defender.TgId
 	case rules.Lost:
 		fight.State = rules.StageEnd
-		session.Stage = rules.StageEnd
 
 	}
 
-	if err := s.redis.SetSession(ctx, sessionId, session); err != nil {
-		return models.Fight{}, -1, err
-	}
-	if err := s.redis.SetFight(ctx, fight); err != nil {
-		return models.Fight{}, -1, err
+	if err := s.mongo.UpdateFight(ctx, fight); err != nil {
+		return entity.Fight{}, -1, err
 	}
 
 	return fight, res, nil

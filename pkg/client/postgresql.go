@@ -9,7 +9,6 @@ import (
 	"log"
 	"seabattle/config"
 	"seabattle/pkg/utils"
-	"time"
 )
 
 type Client interface {
@@ -28,8 +27,7 @@ func NewPostgresClient(ctx context.Context, maxAttempts int, config config.PG) (
 		config.Port,
 		config.Name)
 	err = utils.DoWithTries(func() error {
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
+
 		pool, err = pgxpool.New(ctx, dsn)
 		if err != nil {
 			return err
