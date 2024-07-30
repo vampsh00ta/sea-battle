@@ -1,0 +1,31 @@
+
+syntax = "proto3";
+
+
+package matchmaking;
+
+option go_package = "./pb";
+
+service Matchmaking {
+      rpc FindMatch(FindMatchRequest) returns (FindMatchResponse) {}
+      rpc MatchResult(MatchResultRequest) returns (MatchResultResponse){}
+}
+
+message FindMatchRequest{
+  int64 tgID = 1;
+}
+message FindMatchResponse{
+  int64 tgID = 1;
+}
+
+message MatchResultRequest{
+  int64 tgIDWinner = 1;
+  int64 tgIDLoser = 2;
+}
+
+message MatchResultResponse {
+  bool ok = 1;
+}
+
+
+

@@ -2,7 +2,7 @@ package mongodb
 
 import (
 	"go.mongodb.org/mongo-driver/mongo"
-	irep "seabattle/internal/app/repository"
+	irep "seabattle/internal/app/repository/mongorep"
 )
 
 type db struct {

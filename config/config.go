@@ -14,8 +14,9 @@ type (
 		HTTP  `yaml:"http"`
 		Log   `yaml:"logger"`
 		PG    `yaml:"postgres"`
-		Redis `yaml:"redis"`
+		Mongo `yaml:"mongo"`
 		Tg    `yaml:"tg"`
+		Redis `yaml:"redis"`
 	}
 	Tg struct {
 		Apitoken string `env-required:"true" yaml:"apitoken"    env:"API_TOKEN"`
@@ -46,11 +47,20 @@ type (
 		Port     string `env-required:"true" yaml:"port" env-default:"5432"`
 		Name     string `env-required:"true" yaml:"name" env-default:"postgres"`
 	}
+	// Mongo -.
+
+	Mongo struct {
+		Address    string `env-required:"true" yaml:"address" env:"address"`
+		Db         string `env-required:"true" yaml:"db" env-default:"db"`
+		Collection string `env-required:"true" yaml:"collection" env-default:"collection"`
+	}
+
 	// Redis -.
+
 	Redis struct {
 		Address  string `env-required:"true" yaml:"address" env:"address"`
-		Password string `env-required:"true" yaml:"password" env-default:"password"`
 		Db       int    `env-required:"true" yaml:"db" env-default:"db"`
+		Password string `env-required:"true" yaml:"collection" env-default:"collection"`
 	}
 )
 type (

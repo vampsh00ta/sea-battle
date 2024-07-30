@@ -16,10 +16,10 @@ postgres:
   port: "5432"
   name: "seabattle"
   pool_max: 10
-redis:
-  address: "redis:6379"
-  password: ""
-  db: 0
+mongo:
+  address: "mongorep://localhost:27017"
+  db: "sea_battle"
+  collection: "fight"
 #rabbitmq:
 #  rpc_server_exchange: 'rpc_server'
 #  rpc_client_exchange: 'rpc_client'

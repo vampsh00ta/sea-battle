@@ -1,5 +1,5 @@
-seabattle:
-  name: 'seabattle'
+app:
+  name: 'matchmaking'
   version: '1.0.0'
 
 http:
@@ -13,10 +13,16 @@ tg:
   baseURL: ""
 
 
+
 redis:
   address: "localhost:6379"
-  password: ""
   db: 0
+  password: ""
+
+mongo:
+  address: "mongodb://localhost:27017"
+  db: "sea_battle"
+  collection: "fight"
 postgres:
   username: "seabattle"
   password: "seabattle"

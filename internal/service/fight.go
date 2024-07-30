@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	kafkago "github.com/segmentio/kafka-go"
 	"math/rand"
 	"seabattle/internal/entity"
 
@@ -22,34 +20,6 @@ import (
 //	InitFightAction(ctx context.Context, token string) (*entity.Fight, error)
 //}
 
-func (s service) SearchFight(ctx context.Context, tgId int) error {
-	//connection, err := rmq.OpenConnection("queue", "tcp", "localhost:6379", 1, nil)
-	//if err != nil {
-	//	return err
-	//}
-	//taskQueue, err := connection.OpenQueue("game_search")
-	//if err != nil {
-	//	return err
-	//}
-	//msg := entity.SearchFightMsg{Rating: rand.Intn(1000), TgID: rand.Intn(10000)}
-	//taskBytes, err := json.Marshal(msg)
-	//if err != nil {
-	//	return err
-	//}
-	//if err := taskQueue.PublishBytes(taskBytes); err != nil {
-	//	return err
-	//}
-	msg := entity.SearchFight{Rating: rand.Intn(1000), TgID: rand.Intn(10000)}
-	value, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	if err := s.kafka.WriteMessages(ctx, kafkago.Message{Value: value}); err != nil {
-		return err
-	}
-	return nil
-}
 func (s service) InitFightAction(ctx context.Context, token string) (*entity.Fight, error) {
 	//sessionId, err := s.psql.GetSessionByCode(ctx, token)
 	//if err != nil {
@@ -110,12 +80,36 @@ func (s service) SetShip(ctx context.Context, req entity.SetShip) (*entity.Battl
 	return b, res, nil
 
 }
+
+func (s service) InitFight(ctx context.Context, tgIDs ...string) (entity.Fight, error) {
+
+	code := s.GetInviteCode()
+
+	var fight entity.Fight
+
+	firstTurn := tgIDs[rand.Intn(2)]
+
+	fight.Turn = firstTurn
+	fight.Stage = rules.StagePick
+	fight.SessionId = code
+
+	for _, tgID := range tgIDs {
+		var user entity.User
+		user.TgId = tgID
+		s.setUserParams(&user)
+		fight.Users = append(fight.Users, user)
+	}
+
+	if err := s.mongo.CreateFight(ctx, fight); err != nil {
+		return entity.Fight{}, err
+	}
+	return fight, nil
+}
+
 func (s service) CreateFight(ctx context.Context, tgId string) (string, error) {
 
 	code := s.GetInviteCode()
-	//if err := s.psql.AddSession(ctx, code, session); err != nil {
-	//	return "", err
-	//}
+
 	if err := s.mongo.CreateFight(ctx, entity.Fight{
 		Users: []entity.User{
 			{
@@ -178,8 +172,7 @@ func (s service) Shoot(ctx context.Context, req entity.Shoot) (entity.Fight, int
 	}
 
 	attacker, defender := getCurrRoles(&fight)
-
-	res, err := s.shootEntity(attacker.EnemyField, attacker.MyField, req.Point.Y, req.Point.X)
+	res, err := s.shootEntity(attacker.EnemyField, defender.MyField, req.Point.Y, req.Point.X)
 	if err != nil {
 		return entity.Fight{}, -1, err
 	}
