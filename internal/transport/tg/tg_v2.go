@@ -3,7 +3,6 @@ package tg
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	tgbotapi "github.com/go-telegram/bot"
 	tgmodels "github.com/go-telegram/bot/models"
 	isrvc "seabattle/internal/app/service"
@@ -77,24 +76,6 @@ const (
 //		})
 //
 // }
-func (t Transportv2) CreateFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
-	tgChatId := update.Message.Chat.ID
-	inviteCode, err := t.srvc.CreateFight(ctx, strconv.Itoa(int(tgChatId)))
-	if err != nil {
-
-		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   err.Error(),
-		})
-		return
-	}
-
-	_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   fmt.Sprintf("Отравь эту ссылку своему другу \n ``` %s ``` ", inviteLink+inviteCode),
-	})
-
-}
 
 func (t Transportv2) Pass(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {
 	_, _ = bot.AnswerCallbackQuery(ctx, &tgbotapi.AnswerCallbackQueryParams{
