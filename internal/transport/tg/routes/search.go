@@ -5,6 +5,8 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram/bot"
 	tgmodels "github.com/go-telegram/bot/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"seabattle/internal/entity"
 	"seabattle/internal/pb"
 	"seabattle/internal/transport/tg/keyboard"
@@ -17,9 +19,16 @@ func (t router) SearchFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmo
 
 	res, err := t.gc.FindMatch(ctx, &pb.FindMatchRequest{TgID: int64(tgId)})
 	if err != nil {
+		//добавить нормальную обработку ошибок
+		var errText string
+		if status.Code(err) == codes.Internal {
+			errText = err.Error()
+		} else {
+			errText = "search service currently if unavailable "
+		}
 		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   err.Error(),
+			Text:   errText,
 		})
 		return
 	}
