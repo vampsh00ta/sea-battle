@@ -6,6 +6,7 @@ import (
 	tgbotapi "github.com/go-telegram/bot"
 	tgmodels "github.com/go-telegram/bot/models"
 	"seabattle/internal/entity"
+	"seabattle/internal/pb"
 	"seabattle/internal/service/rules"
 	"seabattle/internal/transport/tg/keyboard"
 	"strconv"
@@ -47,7 +48,7 @@ func (t router) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 
 	user_my2, user_enemy2 := keyboard.BattlefieldAction(&fight.Users[1], fight.Turn, req.Code, end)
 	toSend[fight.Users[1]] = []*tgmodels.InlineKeyboardMarkup{user_my2, user_enemy2}
-
+	var loser, winner int64
 	for user, k := range toSend {
 		myQueryIdInt, _ := strconv.Atoi(user.MyFieldQueryId)
 		enemyQueryIdInt, _ := strconv.Atoi(user.EnemyFieldQueryId)
@@ -67,17 +68,27 @@ func (t router) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 
 		if end {
 			var endText string
+			var tgID int
+			tgID, _ = strconv.Atoi(user.TgId)
+
 			if user.TgId == fight.Turn {
 				endText = "Ты выиграл"
+				winner = int64(tgID)
 			} else {
 				endText = "Ты проиграл"
-
+				loser = int64(tgID)
 			}
 			bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 				ChatID: user.TgId,
 				Text:   endText,
 			})
 		}
+
+	}
+	if end {
+		go func() {
+			_, _ = t.gc.MatchResult(ctx, &pb.MatchResultRequest{TgIDLoser: loser, TgIDWinner: winner})
+		}()
 
 	}
 }
