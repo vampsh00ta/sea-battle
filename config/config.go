@@ -2,24 +2,25 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
-	"gopkg.in/yaml.v3"
-	"os"
+	"github.com/ilyakaznacheev/cleanenv"
+	"path"
 )
 
 type (
 	// Config -.
 	Config struct {
-		App   `yaml:"seabattle"`
+		App   `yaml:"app"`
 		HTTP  `yaml:"http"`
 		Log   `yaml:"logger"`
-		PG    `yaml:"postgres"`
 		Mongo `yaml:"mongo"`
 		Tg    `yaml:"tg"`
-		Redis `yaml:"redis"`
+	}
+	SearchService struct {
+		Host string `env-required:"true" yaml:"port" env:"SEARCH_SERVICE_HOST"`
+		Port string `env-required:"true" yaml:"port" env:"SEARCH_SERVICE_PORT"`
 	}
 	Tg struct {
-		Apitoken string `env-required:"true" yaml:"apitoken"    env:"API_TOKEN"`
+		ApiToken string `env-required:"true" yaml:"apitoken"    env:"API_TOKEN"`
 		BaseURL  string `env-required:"true" yaml:"baseURL"    env:"API_TOKEN"`
 	}
 	// App -.
@@ -35,32 +36,16 @@ type (
 
 	// Log -.
 	Log struct {
-		Level string `env-required:"true" yaml:"log_level"   env:"LOG_LEVEL"`
+		Level string `yaml:"log_level"   env:"LOG_LEVEL"`
 	}
 
-	// PG -.
-	PG struct {
-		PoolMax  int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
-		Username string `env-required:"true" yaml:"username" env-default:"postgres"`
-		Password string `env-required:"true" yaml:"password" env-default:"postgres"`
-		Host     string `env-required:"true" yaml:"host" env-default:"localhost"`
-		Port     string `env-required:"true" yaml:"port" env-default:"5432"`
-		Name     string `env-required:"true" yaml:"name" env-default:"postgres"`
-	}
 	// Mongo -.
 
 	Mongo struct {
-		Address    string `env-required:"true" yaml:"address" env:"address"`
-		Db         string `env-required:"true" yaml:"db" env-default:"db"`
-		Collection string `env-required:"true" yaml:"collection" env-default:"collection"`
-	}
-
-	// Redis -.
-
-	Redis struct {
-		Address  string `env-required:"true" yaml:"address" env:"address"`
-		Db       int    `env-required:"true" yaml:"db" env-default:"db"`
-		Password string `env-required:"true" yaml:"collection" env-default:"collection"`
+		Address    string `env-required:"true" yaml:"address" env:"MONGO_HOST"`
+		Db         string `env-required:"true" yaml:"db" env:"MONGO_DB"`
+		Collection string `env-required:"true" yaml:"collection" env:"MONGO_COLLECTION"`
+		URL        string `env-required:"true"                      env:"MONGO_URL"`
 	}
 )
 type (
@@ -76,55 +61,34 @@ type (
 	}
 )
 
-func New() (*Config, error) {
-	err := godotenv.Load(".env")
-	if err != nil {
-		return nil, err
-	}
-	currPath, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	filePath := currPath + os.Getenv("path") + "/" + os.Getenv("env") + ".yml"
-	fmt.Println(filePath)
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+func New(configPath string) (*Config, error) {
+	cfg := &Config{}
 
-	d := yaml.NewDecoder(file)
-	var cfg *Config
+	err := cleanenv.ReadConfig(path.Join("./", configPath), cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config file: %w", err)
+	}
 
-	if err := d.Decode(&cfg); err != nil {
-		return nil, err
+	err = cleanenv.UpdateEnv(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error updating env: %w", err)
 	}
 
 	return cfg, nil
-
 }
 
-func NewGame() (*Game, error) {
-	err := godotenv.Load(".env")
-	if err != nil {
-		return nil, err
-	}
-	currPath, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	filePath := currPath + os.Getenv("path") + "/" + "game.yaml"
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+func NewGame(configPath string) (*Game, error) {
 
-	d := yaml.NewDecoder(file)
-	var cfg *Game
+	cfg := &Game{}
 
-	if err := d.Decode(&cfg); err != nil {
-		return nil, err
+	err := cleanenv.ReadConfig(path.Join("./", configPath), cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config file: %w", err)
+	}
+
+	err = cleanenv.UpdateEnv(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error updating env: %w", err)
 	}
 
 	return cfg, nil

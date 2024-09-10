@@ -2,6 +2,7 @@ package seabattle
 
 import (
 	"context"
+	"fmt"
 	tgbotapi "github.com/go-telegram/bot"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -12,7 +13,7 @@ import (
 	"os/signal"
 	"seabattle/config"
 	"seabattle/internal/pb"
-	mongorep "seabattle/internal/repository/mongodb"
+	mongorep "seabattle/internal/repository"
 	"seabattle/internal/service"
 
 	"seabattle/internal/transport/tg"
@@ -55,16 +56,9 @@ import (
 func NewPooling(cfg *config.Config) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	//
-	//clientRedis := redis.NewClient(&redis.Options{
-	//	Addr:     cfg.Redis.Address,
-	//	Password: cfg.Redis.Password,
-	//	DB:       cfg.Redis.Db,
-	//})
-	//redrep := redisorep.New(clientRedis)
-	//err := redrep.AddUserToQueue(ctx, 500, 555)
 
-	mong, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Mongo.Address))
+	fmt.Println(cfg.Mongo.URL)
+	mong, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Mongo.URL))
 	if err != nil {
 		panic(err)
 	}
@@ -73,18 +67,11 @@ func NewPooling(cfg *config.Config) {
 
 	mongrep := mongorep.New(collection)
 
-	gameCfg, err := config.NewGame()
+	gameCfg, err := config.NewGame("config/game.yaml")
 	if err != nil {
 		log.Fatalf("Config error: %s", err)
 	}
-	// Создаём соединение с gRPC-сервером SSO для клиента
 
-	//kafka := &kafkago.Writer{
-	//	Addr:                   kafkago.TCP("kafka:9092"),
-	//	Topic:                  "search",
-	//	Balancer:               &kafkago.LeastBytes{},
-	//	AllowAutoTopicCreation: true,
-	//}
 	srvc := service.New(mongrep, gameCfg, nil)
 
 	interrupt := make(chan os.Signal, 1)
@@ -96,16 +83,15 @@ func NewPooling(cfg *config.Config) {
 		//tgbotapi.WithMiddlewares(handlers.BreakSkat),
 	}
 
-	cc, err := grpc.DialContext(ctx, ":50501",
+	cc, err := grpc.NewClient("0.0.0.0:50501",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	// Создаём gRPC-клиент SSO/Auth
 	grpcClient := pb.NewMatchmakingClient(cc)
-	bot, err := tgbotapi.New(cfg.Apitoken, opts...)
+	bot, err := tgbotapi.New(cfg.ApiToken, opts...)
 	if err != nil {
 		panic(err)
 	}

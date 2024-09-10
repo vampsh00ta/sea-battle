@@ -19,6 +19,7 @@ func (t router) SearchFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmo
 
 	res, err := t.gc.FindMatch(ctx, &pb.FindMatchRequest{TgID: int64(tgId)})
 	if err != nil {
+		fmt.Println(err)
 		//добавить нормальную обработку ошибок
 		var errText string
 		if status.Code(err) == codes.Internal {
@@ -32,16 +33,10 @@ func (t router) SearchFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmo
 		})
 		return
 	}
-	if err != nil {
-		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   err.Error(),
-		})
-		return
-	}
+
 	switch {
 	case res.TgID == -1:
-		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   "Идет поиск оппонента",
 		})

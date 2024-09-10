@@ -39,11 +39,11 @@ func (e service) shootEntity(attacker, defender *entity.BattleField, x, y int) (
 				res = rules.Killed
 			}
 
-			used[entity.Point{x, y}] = true
+			used[entity.Point{X: x, Y: y}] = true
 			dirs := [][]int{{-1, 0}, {0, -1}, {1, 0}, {0, 1}}
 			for _, dir := range dirs {
 				x0, y0 := dir[0], dir[1]
-				p := entity.Point{x + x0, y + y0}
+				p := entity.Point{X: x + x0, Y: y + y0}
 				if _, ok := used[p]; !ok && p.X < len(defender.Fields[0]) && p.Y < len(defender.Fields) && p.X >= 0 && p.Y >= 0 {
 					if defender.Fields[p.X][p.Y].Ship {
 						descCount(p.X, p.Y)
@@ -86,7 +86,7 @@ func (e service) addShipEntity(b *entity.BattleField, p1, p2 entity.Point) (int,
 
 		for _, dir := range d {
 			x0, y0 := dir[0], dir[1]
-			p := entity.Point{x + x0, y + y0}
+			p := entity.Point{X: x + x0, Y: y + y0}
 
 			if p.X < len(b.Fields[0]) && p.Y < len(b.Fields) && p.X >= 0 && p.Y >= 0 {
 				if b.Fields[p.Y][p.X].Ship {

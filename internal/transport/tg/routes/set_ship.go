@@ -64,7 +64,7 @@ func (t router) SetShip(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels
 		kb = keyboard.SetBattlefieldWithError(b, req.Code, text, err.Error())
 
 	}
-	_, err = bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
+	_, _ = bot.EditMessageReplyMarkup(ctx, &tgbotapi.EditMessageReplyMarkupParams{
 		ChatID:    update.CallbackQuery.Message.Chat.ID,
 		MessageID: update.CallbackQuery.Message.ID,
 

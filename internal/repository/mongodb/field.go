@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	irep "seabattle/internal/app/repository/mongorep"
 	"seabattle/internal/entity"
 )
 
@@ -16,7 +17,14 @@ import (
 //	SetBattleField(ctx context.Context, sessionID, idChatKey string, fields *entity.BattleField, myField bool) error
 //}
 
-func (db db) GetBattleField(ctx context.Context, sessionID, tgID string, myField bool) (*entity.BattleField, error) {
+type Field struct {
+	collection *mongo.Collection
+}
+
+func NewField(collection *mongo.Collection) irep.Field {
+	return &Field{collection: collection}
+}
+func (db Field) GetBattleField(ctx context.Context, sessionID, tgID string, myField bool) (*entity.BattleField, error) {
 	// Агрегационный конвейер
 	pipeline := mongo.Pipeline{
 		{{"$match", bson.D{{"users.tg_id", tgID}, {"session_id", sessionID}}}},
@@ -61,7 +69,7 @@ func (db db) GetBattleField(ctx context.Context, sessionID, tgID string, myField
 	return nil, errors.New("user not found")
 }
 
-func (db db) GetBattleFields(ctx context.Context, sessionID, idChatKey string) ([]*entity.BattleField, error) {
+func (db Field) GetBattleFields(ctx context.Context, sessionID, idChatKey string) ([]*entity.BattleField, error) {
 	var user entity.User
 
 	filter := bson.D{{"session_id", sessionID}, {"users.tg_id", idChatKey}}
@@ -73,7 +81,7 @@ func (db db) GetBattleFields(ctx context.Context, sessionID, idChatKey string) (
 	}
 	return []*entity.BattleField{user.MyField, user.EnemyField}, nil
 }
-func (db db) SetBattleField(ctx context.Context, sessionID, idChatKey string, fields *entity.BattleField, myField bool) error {
+func (db Field) SetBattleField(ctx context.Context, sessionID, idChatKey string, fields *entity.BattleField, myField bool) error {
 	var fieldName string
 	if myField {
 		fieldName = "my_field"

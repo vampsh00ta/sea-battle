@@ -2,4 +2,6 @@ package rules
 
 import "seabattle/config"
 
-var Game, _ = config.NewGame()
+const configPath = "config/game.yaml"
+
+var Game, _ = config.NewGame(configPath)

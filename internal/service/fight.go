@@ -61,13 +61,13 @@ func (s service) SetShip(ctx context.Context, req entity.SetShip) (*entity.Battl
 
 		isReady, err := s.addShipEntity(b, p, req.Point)
 		if err != nil {
-			if err := s.mongo.SetPoint(ctx, req.Code, req.TgId, entity.Point{-1, -1}); err != nil {
-				return nil, -1, err
+			if setPointErr := s.mongo.SetPoint(ctx, req.Code, req.TgId, entity.Point{X: -1, Y: -1}); setPointErr != nil {
+				return nil, -1, setPointErr
 			}
 			res = rules.ShipFirstPoint
 			return b, res, err
 		}
-		if err := s.mongo.SetPoint(ctx, req.Code, req.TgId, entity.Point{-1, -1}); err != nil {
+		if err := s.mongo.SetPoint(ctx, req.Code, req.TgId, entity.Point{X: -1, Y: -1}); err != nil {
 			return nil, -1, err
 		}
 		if err := s.mongo.SetBattleField(ctx, req.Code, req.TgId, b, true); err != nil {

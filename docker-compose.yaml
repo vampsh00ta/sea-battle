@@ -3,54 +3,26 @@ services:
   seabattle:
     build:
       context: .
-    image: goseabattle
-    container_name: goseabattle
+    container_name: seabattle-main
     env_file:
       - .env
     ports:
-      - "8000:8000"
-    restart: always
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongodb
     networks:
       - db
-  db:
-    image: postgres:14.6
-    restart: always
-    container_name: db
-    hostname: db
+
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    container_name: mongodb
     environment:
-      POSTGRES_DB: "seabattle"
-      POSTGRES_USER: "seabattle"
-      POSTGRES_PASSWORD: "seabattle"
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgres
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U seabattle" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - db
-  redis:
-    image: redis:latest
-    restart: always
-    ports:
-      - "6379:6379"
-    environment:
-      - REDIS_PASSWORD=""
-      - REDIS_PORT=6379
-      - REDIS_DATABASES=0
-    healthcheck:
-      test: [ "CMD-SHELL", "ping" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - MONGO_INITDB_ROOT_USERNAME="${MONGO_USERNAME}"
+      - MONGO_INITDB_ROOT_PASSWORD=$"${MONGO_PASSWORD}"
+      - MONGO_INITDB_ROOT_HOST="${MONGO_HOST}"
+      - MONGO_INITDB_ROOT_PORT="${MONGO_PORT}"
+      - MONGO_INITDB_ROOT_NAME="${MONGO_NAME}"
 
 networks:
   db:

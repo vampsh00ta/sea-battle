@@ -18,7 +18,7 @@ func (t router) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 	dataStr := strings.Split(update.CallbackQuery.Data, "#")[1]
 	var req entity.Shoot
 	if err := json.Unmarshal([]byte(dataStr), &req); err != nil {
-		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.CallbackQuery.Message.Chat.ID,
 			Text:   err.Error(),
 		})
@@ -27,7 +27,7 @@ func (t router) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 	req.TgId = strconv.Itoa(int(tgId))
 	fight, res, err := t.srvc.Shoot(ctx, req)
 	if err != nil {
-		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.CallbackQuery.Message.Chat.ID,
 			Text:   err.Error(),
 		})
@@ -78,7 +78,7 @@ func (t router) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 				endText = "Ты проиграл"
 				loser = int64(tgID)
 			}
-			bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
+			_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 				ChatID: user.TgId,
 				Text:   endText,
 			})
