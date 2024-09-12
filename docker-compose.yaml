@@ -18,11 +18,13 @@ services:
     image: mongodb/mongodb-community-server:latest
     container_name: mongodb
     environment:
-      - MONGO_INITDB_ROOT_USERNAME="${MONGO_USERNAME}"
-      - MONGO_INITDB_ROOT_PASSWORD=$"${MONGO_PASSWORD}"
-      - MONGO_INITDB_ROOT_HOST="${MONGO_HOST}"
-      - MONGO_INITDB_ROOT_PORT="${MONGO_PORT}"
-      - MONGO_INITDB_ROOT_NAME="${MONGO_NAME}"
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_USERNAME}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASSWORD}"
+      MONGO_INITDB_DATABASE: "${MONGO_DB}"
+      MONGO_INITDB_PORT: "${MONGO_PORT}"
+
+    ports:
+      - "${MONGO_PORT}:${MONGO_PORT}"
 
 networks:
   db:

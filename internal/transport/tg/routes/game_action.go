@@ -25,7 +25,7 @@ func (t router) GameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmod
 		return
 	}
 	req.TgId = strconv.Itoa(int(tgId))
-	fight, res, err := t.srvc.Shoot(ctx, req)
+	fight, res, err := t.battleAction.Shoot(ctx, req)
 	if err != nil {
 		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.CallbackQuery.Message.Chat.ID,

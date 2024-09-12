@@ -19,7 +19,7 @@ func (t router) JoinFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmode
 	}
 	tgId := update.Message.Chat.ID
 	code := msg[len("/start")+1:]
-	f, err := t.srvc.JoinFight(ctx, code, strconv.Itoa(int(tgId)))
+	f, err := t.battlePreparation.JoinFight(ctx, code, strconv.Itoa(int(tgId)))
 	if err != nil {
 		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
@@ -33,7 +33,7 @@ func (t router) JoinFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmode
 			Text:        "Раставь корабли",
 			ReplyMarkup: keyboard.SetBattlefield(f.Users[i].MyField, code, keyboard.FirstPoint),
 		})
-		if err := t.srvc.SetFieldQueryId(ctx, code, f.Users[i].TgId, strconv.Itoa(a.ID), true); err != nil {
+		if err := t.battlePreparation.SetFieldQueryId(ctx, code, f.Users[i].TgId, strconv.Itoa(a.ID), true); err != nil {
 			_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 				ChatID: f.Users[i].TgId,
 				Text:   err.Error(),

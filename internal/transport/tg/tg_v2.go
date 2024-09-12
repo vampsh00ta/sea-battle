@@ -7,8 +7,8 @@ import (
 	"seabattle/internal/transport/tg/routes"
 )
 
-func New(bot *tgbotapi.Bot, s isrvc.Service, gc pb.MatchmakingClient) {
-	tr := routes.New(s, gc)
+func New(bot *tgbotapi.Bot, battleAction isrvc.BattleAction, battlePreparation isrvc.BattlePreparation, gc pb.MatchmakingClient) {
+	tr := routes.New(battleAction, battlePreparation, gc)
 	bot.RegisterHandler(tgbotapi.HandlerTypeMessageText,
 		"/creategame",
 		tgbotapi.MatchTypeExact, tr.CreateFight,

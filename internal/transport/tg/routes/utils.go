@@ -10,7 +10,7 @@ import (
 )
 
 func (t router) createGameAction(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update, token string) {
-	fight, err := t.srvc.InitFightAction(ctx, token)
+	fight, err := t.battlePreparation.InitFightAction(ctx, token)
 
 	if err != nil {
 		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
@@ -41,7 +41,7 @@ func (t router) createGameAction(ctx context.Context, bot *tgbotapi.Bot, update 
 			Text:        "Бой начался",
 			ReplyMarkup: keyboard[1],
 		})
-		if err := t.srvc.SetFieldQueryId(ctx, token, user.TgId, strconv.Itoa(field.ID), false); err != nil {
+		if err := t.battlePreparation.SetFieldQueryId(ctx, token, user.TgId, strconv.Itoa(field.ID), false); err != nil {
 			bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 				ChatID: user.TgId,
 				Text:   err.Error(),

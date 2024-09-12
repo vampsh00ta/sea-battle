@@ -45,7 +45,7 @@ type (
 		Address    string `env-required:"true" yaml:"address" env:"MONGO_HOST"`
 		Db         string `env-required:"true" yaml:"db" env:"MONGO_DB"`
 		Collection string `env-required:"true" yaml:"collection" env:"MONGO_COLLECTION"`
-		URL        string `env-required:"true"                      env:"MONGO_URL"`
+		URL        string `env-required:"true"                      env:"MONGODB_URL"`
 	}
 )
 type (

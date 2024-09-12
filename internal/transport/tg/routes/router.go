@@ -9,12 +9,13 @@ import (
 )
 
 type router struct {
-	srvc isrvc.Service
-	gc   pb.MatchmakingClient
+	battleAction      isrvc.BattleAction
+	battlePreparation isrvc.BattlePreparation
+	gc                pb.MatchmakingClient
 }
 
-func New(srvc isrvc.Service, gc pb.MatchmakingClient) router {
-	return router{srvc: srvc, gc: gc}
+func New(battleAction isrvc.BattleAction, battlePreparation isrvc.BattlePreparation, gc pb.MatchmakingClient) router {
+	return router{battleAction: battleAction, battlePreparation: battlePreparation, gc: gc}
 }
 
 func (t router) Pass(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels.Update) {

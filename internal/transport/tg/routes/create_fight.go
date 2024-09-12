@@ -12,7 +12,7 @@ func (t router) CreateFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmo
 
 	tgChatId := update.Message.Chat.ID
 
-	inviteCode, err := t.srvc.CreateFight(ctx, strconv.Itoa(int(tgChatId)))
+	inviteCode, err := t.battlePreparation.CreateFight(ctx, strconv.Itoa(int(tgChatId)))
 
 	if err != nil {
 		_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{

@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"seabattle/config"
 	"seabattle/internal/pb"
-	mongorep "seabattle/internal/repository"
+	mongorep "seabattle/internal/repository/mongodb"
 	"seabattle/internal/service"
 
 	"seabattle/internal/transport/tg"
@@ -65,14 +65,17 @@ func NewPooling(cfg *config.Config) {
 
 	collection := mong.Database(cfg.Mongo.Db).Collection(cfg.Collection)
 
-	mongrep := mongorep.New(collection)
+	fightRep := mongorep.NewFight(collection)
+	userRep := mongorep.NewUser(collection)
+	battlefieldRep := mongorep.NewBattleField(collection)
 
 	gameCfg, err := config.NewGame("config/game.yaml")
 	if err != nil {
 		log.Fatalf("Config error: %s", err)
 	}
 
-	srvc := service.New(mongrep, gameCfg, nil)
+	battleActionSrvc := service.NewBattleAction(fightRep, gameCfg)
+	battlePreparactionSrvc := service.NewBattlePreparation(fightRep, userRep, battlefieldRep, gameCfg)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -95,7 +98,7 @@ func NewPooling(cfg *config.Config) {
 	if err != nil {
 		panic(err)
 	}
-	tg.New(bot, srvc, grpcClient)
+	tg.New(bot, battleActionSrvc, battlePreparactionSrvc, grpcClient)
 	bot.Start(ctx)
 
 }

@@ -47,7 +47,7 @@ func (t router) SearchFight(ctx context.Context, bot *tgbotapi.Bot, update *tgmo
 			strconv.Itoa(int(res.TgID)),
 		}
 		fmt.Println(tgIDs)
-		f, err := t.srvc.InitFight(ctx, tgIDs...)
+		f, err := t.battlePreparation.InitFight(ctx, tgIDs...)
 		if err != nil {
 			_, _ = bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
@@ -70,7 +70,7 @@ func (t router) notifyUsersAboutFight(ctx context.Context, bot *tgbotapi.Bot, f 
 			Text:        "Раставь корабли",
 			ReplyMarkup: keyboard.SetBattlefield(f.Users[i].MyField, f.SessionId, keyboard.FirstPoint),
 		})
-		if err := t.srvc.SetFieldQueryId(ctx, f.SessionId, f.Users[i].TgId, strconv.Itoa(a.ID), true); err != nil {
+		if err := t.battlePreparation.SetFieldQueryId(ctx, f.SessionId, f.Users[i].TgId, strconv.Itoa(a.ID), true); err != nil {
 			bot.SendMessage(ctx, &tgbotapi.SendMessageParams{
 				ChatID: f.Users[i].TgId,
 				Text:   err.Error(),

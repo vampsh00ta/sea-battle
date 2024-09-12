@@ -25,7 +25,7 @@ func (t router) SetShip(ctx context.Context, bot *tgbotapi.Bot, update *tgmodels
 	}
 	tgId := strconv.Itoa(int(update.CallbackQuery.Message.Chat.ID))
 	setShipReq := entity.SetShip{TgId: tgId, Point: req.Point, Code: req.Code}
-	b, statusCode, err := t.srvc.SetShip(ctx, setShipReq)
+	b, statusCode, err := t.battlePreparation.SetShip(ctx, setShipReq)
 
 	if err != nil && !checkError(err) {
 		bot.SendMessage(ctx, &tgbotapi.SendMessageParams{

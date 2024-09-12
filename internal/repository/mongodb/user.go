@@ -24,7 +24,8 @@ type User struct {
 func NewUser(collection *mongo.Collection) irep.User {
 	return &User{collection: collection}
 }
-func (db User) SetUser(ctx context.Context, sessionID string, user entity.User) error {
+
+func (db User) Set(ctx context.Context, sessionID string, user entity.User) error {
 	filter := bson.D{{"session_id", sessionID}}
 	_, err := db.collection.UpdateOne(ctx, filter, bson.D{{"$push", bson.D{
 		{
@@ -67,7 +68,7 @@ func (db User) SetFieldQueryId(ctx context.Context, sessionID, tgId, queryID str
 	return nil
 }
 
-func (db User) GetUser(ctx context.Context, tgID string) (entity.User, error) {
+func (db User) GetByTgID(ctx context.Context, tgID string) (entity.User, error) {
 	// Агрегационный конвейер
 	pipeline := mongo.Pipeline{
 		{{"$match", bson.D{{"users.tg_id", tgID}}}},
