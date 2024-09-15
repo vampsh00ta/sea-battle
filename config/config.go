@@ -9,24 +9,27 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App   `yaml:"app"`
-		HTTP  `yaml:"http"`
-		Log   `yaml:"logger"`
-		Mongo `yaml:"mongo"`
-		Tg    `yaml:"tg"`
+		App           `yaml:"app"`
+		HTTP          `yaml:"http"`
+		Log           `yaml:"logger"`
+		Mongo         `yaml:"mongo"`
+		Tg            `yaml:"tg"`
+		SearchService `yaml:"search"`
 	}
+	// SearchService -.
 	SearchService struct {
-		Host string `env-required:"true" yaml:"port" env:"SEARCH_SERVICE_HOST"`
-		Port string `env-required:"true" yaml:"port" env:"SEARCH_SERVICE_PORT"`
+		Host string `env-required:"true" yaml:"search_service_host" env:"SEARCH_SERVICE_HOST"`
+		Port string `env-required:"true" yaml:"search_service_port" env:"SEARCH_SERVICE_PORT"`
+		URL  string `env-required:"true" yaml:"search_service_url" env:"SEARCH_SERVICE_URL"`
 	}
 	Tg struct {
 		ApiToken string `env-required:"true" yaml:"apitoken"    env:"API_TOKEN"`
-		BaseURL  string `env-required:"true" yaml:"baseURL"    env:"API_TOKEN"`
+		BaseURL  string `yaml:"baseURL"    env:"BASE_URL"`
 	}
 	// App -.
 	App struct {
-		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
+		Name    string ` yaml:"name"    env:"APP_NAME"`
+		Version string ` yaml:"version" env:"APP_VERSION"`
 	}
 
 	// HTTP -.

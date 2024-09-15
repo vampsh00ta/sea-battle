@@ -17,15 +17,15 @@ import (
 //	GetPoint(ctx context.Context, sessionID, idChatKey string) (entity.Point, error)
 //}
 
-type User struct {
+type user struct {
 	collection *mongo.Collection
 }
 
 func NewUser(collection *mongo.Collection) irep.User {
-	return &User{collection: collection}
+	return &user{collection: collection}
 }
 
-func (db User) Set(ctx context.Context, sessionID string, user entity.User) error {
+func (db user) Set(ctx context.Context, sessionID string, user entity.User) error {
 	filter := bson.D{{"session_id", sessionID}}
 	_, err := db.collection.UpdateOne(ctx, filter, bson.D{{"$push", bson.D{
 		{
@@ -39,7 +39,7 @@ func (db User) Set(ctx context.Context, sessionID string, user entity.User) erro
 	return nil
 
 }
-func (db User) SetFieldQueryId(ctx context.Context, sessionID, tgId, queryID string, my bool) error {
+func (db user) SetFieldQueryId(ctx context.Context, sessionID, tgId, queryID string, my bool) error {
 
 	var queryField string
 
@@ -68,7 +68,7 @@ func (db User) SetFieldQueryId(ctx context.Context, sessionID, tgId, queryID str
 	return nil
 }
 
-func (db User) GetByTgID(ctx context.Context, tgID string) (entity.User, error) {
+func (db user) GetByTgID(ctx context.Context, tgID string) (entity.User, error) {
 	// Агрегационный конвейер
 	pipeline := mongo.Pipeline{
 		{{"$match", bson.D{{"users.tg_id", tgID}}}},
@@ -107,7 +107,7 @@ func (db User) GetByTgID(ctx context.Context, tgID string) (entity.User, error) 
 	return entity.User{}, errors.New("user not found")
 }
 
-func (db User) SetPoint(ctx context.Context, sessionID, idChatKey string, p entity.Point) error {
+func (db user) SetPoint(ctx context.Context, sessionID, idChatKey string, p entity.Point) error {
 	filter := bson.D{{"session_id", sessionID}, {"users.tg_id", idChatKey}}
 	update := bson.M{
 		"$set": bson.M{
@@ -124,7 +124,7 @@ func (db User) SetPoint(ctx context.Context, sessionID, idChatKey string, p enti
 	}
 	return nil
 }
-func (db User) GetPoint(ctx context.Context, sessionID, tgID string) (entity.Point, error) {
+func (db user) GetPoint(ctx context.Context, sessionID, tgID string) (entity.Point, error) {
 	// Агрегационный конвейер
 	pipeline := mongo.Pipeline{
 		{{"$match", bson.D{{"session_id", sessionID}, {"users.tg_id", tgID}}}},

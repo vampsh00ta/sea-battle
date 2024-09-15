@@ -11,20 +11,14 @@ import (
 	"seabattle/internal/entity"
 )
 
-//type BattleField interface {
-//	GetBattleField(ctx context.Context, sessionID, idChatKey string, myField bool) (*entity.BattleField, error)
-//	GetBattleFields(ctx context.Context, sessionID, idChatKey string) ([]*entity.BattleField, error)
-//	SetBattleField(ctx context.Context, sessionID, idChatKey string, fields *entity.BattleField, myField bool) error
-//}
-
-type Field struct {
+type battlefield struct {
 	collection *mongo.Collection
 }
 
 func NewBattleField(collection *mongo.Collection) irep.BattleField {
-	return &Field{collection: collection}
+	return &battlefield{collection: collection}
 }
-func (db Field) GetBySessionID(ctx context.Context, sessionID, tgID string, myField bool) (*entity.BattleField, error) {
+func (db battlefield) GetBySessionID(ctx context.Context, sessionID, tgID string, myField bool) (*entity.BattleField, error) {
 	// Агрегационный конвейер
 	pipeline := mongo.Pipeline{
 		{{"$match", bson.D{{"users.tg_id", tgID}, {"session_id", sessionID}}}},
@@ -69,7 +63,7 @@ func (db Field) GetBySessionID(ctx context.Context, sessionID, tgID string, myFi
 	return nil, errors.New("user not found")
 }
 
-func (db Field) GetAll(ctx context.Context, sessionID, idChatKey string) ([]*entity.BattleField, error) {
+func (db battlefield) GetAll(ctx context.Context, sessionID, idChatKey string) ([]*entity.BattleField, error) {
 	var user entity.User
 
 	filter := bson.D{{"session_id", sessionID}, {"users.tg_id", idChatKey}}
@@ -81,7 +75,7 @@ func (db Field) GetAll(ctx context.Context, sessionID, idChatKey string) ([]*ent
 	}
 	return []*entity.BattleField{user.MyField, user.EnemyField}, nil
 }
-func (db Field) Set(ctx context.Context, sessionID, idChatKey string, fields *entity.BattleField, myField bool) error {
+func (db battlefield) Set(ctx context.Context, sessionID, idChatKey string, fields *entity.BattleField, myField bool) error {
 	var fieldName string
 	if myField {
 		fieldName = "my_field"

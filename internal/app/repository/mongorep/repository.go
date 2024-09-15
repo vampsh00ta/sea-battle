@@ -5,11 +5,6 @@ import (
 	"seabattle/internal/entity"
 )
 
-//	type Repository interface {
-//		User
-//		Fight
-//		Field
-//	}
 type BattleField interface {
 	GetBySessionID(ctx context.Context, sessionID, idChatKey string, myField bool) (*entity.BattleField, error)
 	GetAll(ctx context.Context, sessionID, idChatKey string) ([]*entity.BattleField, error)

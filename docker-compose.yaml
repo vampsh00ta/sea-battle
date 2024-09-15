@@ -11,15 +11,16 @@ services:
     restart: unless-stopped
     depends_on:
       - mongodb
-    networks:
-      - db
+
 
   mongodb:
     image: mongodb/mongodb-community-server:latest
-    container_name: mongodb
+    container_name: ${MONGO_HOST}
     environment:
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_USERNAME}"
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASSWORD}"
+      MONGO_INITDB_USERNAME: "${MONGO_USERNAME}"
+      MONGO_INITDB_PASSWORD: "${MONGO_PASSWORD}"
       MONGO_INITDB_DATABASE: "${MONGO_DB}"
       MONGO_INITDB_PORT: "${MONGO_PORT}"
 
@@ -29,5 +30,7 @@ services:
 networks:
   db:
     driver: bridge
+
+
 volumes:
   postgres_data:

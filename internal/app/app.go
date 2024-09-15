@@ -57,7 +57,7 @@ func NewPooling(cfg *config.Config) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	fmt.Println(cfg.Mongo.URL)
+	fmt.Println(cfg.SearchService)
 	mong, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Mongo.URL))
 	if err != nil {
 		panic(err)
@@ -85,8 +85,8 @@ func NewPooling(cfg *config.Config) {
 
 		//tgbotapi.WithMiddlewares(handlers.BreakSkat),
 	}
-
-	cc, err := grpc.NewClient("0.0.0.0:50501",
+	fmt.Println(cfg.SearchService.URL)
+	cc, err := grpc.NewClient("seabattle-matchmaking:50501",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
